@@ -5,10 +5,12 @@ namespace Enrolliks.Persistence
 {
     public interface IPeopleRepository
     {
-        Task<IList<Person>> GetAllAsync();
-
         Task CreateAsync(Person person);
 
         Task DeleteAsync(string name);
+
+        Task<bool> ExistsAsync(string name);
+
+        Task<IList<Person>> GetAllAsync();
     }
 }

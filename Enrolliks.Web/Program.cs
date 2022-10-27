@@ -11,7 +11,7 @@ namespace Enrolliks.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllers();
 
             builder.Services.AddEntityFrameworkPersistence((provider, options) =>
             {
@@ -21,9 +21,9 @@ namespace Enrolliks.Web
 
             var app = builder.Build();
 
+            app.UseDefaultFiles();
             app.UseStaticFiles();
-
-            app.MapControllerRoute("default", "/{controller=Home}/{action=Index}");
+            app.MapControllers();
 
             app.Run();
         }

@@ -21,7 +21,7 @@ namespace Enrolliks.Persistence.EntityFramework
 
         public async Task DeleteAsync(string name)
         {
-            bool personExists = await _context.People.AnyAsync(person => person.Name == name);
+            bool personExists = await ExistsAsync(name);
             if (personExists)
             {
                 var person = new Person(name);
@@ -34,6 +34,12 @@ namespace Enrolliks.Persistence.EntityFramework
         {
             var people = await _context.People.ToListAsync();
             return people;
+        }
+
+        public async Task<bool> ExistsAsync(string name)
+        {
+            bool exists = await _context.People.AnyAsync(person => person.Name == name);
+            return exists;
         }
     }
 }
