@@ -1,21 +1,14 @@
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 
-const HomePage = require('./homePage');
-const PeoplePage = require('./people/peoplePage');
-
 class App extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            currentPage: <HomePage />
-        };
-    }
+    static render(page) {
+        const div = document.createElement('div');
+        document.body.appendChild(div);
 
-    navigateTo(page) {
-        this.setState({
-            currentPage: page,
-        });
+        const app = <App>{page}</App>;
+
+        createRoot(div).render(app);
     }
 
     render() {
@@ -23,15 +16,13 @@ class App extends React.Component {
             <div>
                 <h1>Enrolliks</h1>
                 <nav>
-                    <button onClick={() => this.navigateTo(<HomePage />)}>Home</button>
-                    <button onClick={() => this.navigateTo(<PeoplePage navigateTo={page => this.navigateTo(page)} />)}>People</button>
+                    <a href='/home'>Home</a>
+                    <a href='/people'>People</a>
                 </nav>
-                {this.state.currentPage}
+                {this.props.children}
             </div>
         );
     }
 }
 
-const div = document.createElement('div');
-document.body.appendChild(div);
-createRoot(div).render(<App />);
+module.exports = App;

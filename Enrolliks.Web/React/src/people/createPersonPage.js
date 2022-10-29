@@ -1,5 +1,6 @@
 const React = require('react');
 const axios = require('axios').default;
+const App = require('../app');
 
 class CreatePersonPage extends React.Component {
     constructor(props) {
@@ -20,7 +21,7 @@ class CreatePersonPage extends React.Component {
                 name: this.state.name
             });
 
-            this.props.goBack();
+            window.location.href = window.origin + '/people';
         } catch {
             this.setState({submitAllowed: true, error: true});
         }
@@ -44,5 +45,7 @@ class CreatePersonPage extends React.Component {
         );
     }
 }
+
+App.render(<CreatePersonPage />);
 
 module.exports = CreatePersonPage;

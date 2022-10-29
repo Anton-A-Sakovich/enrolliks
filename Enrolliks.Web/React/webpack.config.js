@@ -4,7 +4,11 @@ module.exports = {
     mode: 'development',
     devtool: 'inline-source-map',
 
-    entry: './src/app.js',
+    entry: {
+        "home/index": './src/homePage.js',
+        "people/index": './src/people/peoplePage.js',
+        "people/create": './src/people/createPersonPage.js',
+    },
 
     output: {
         filename: '[name].js',

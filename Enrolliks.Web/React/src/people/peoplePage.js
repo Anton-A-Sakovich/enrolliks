@@ -1,6 +1,6 @@
 const React = require('react');
 const PersonRow = require('./personRow');
-const CreatePersonPage = require('./createPersonPage');
+const App = require('../app');
 
 class PeoplePage extends React.Component {
     constructor(props) {
@@ -28,12 +28,9 @@ class PeoplePage extends React.Component {
     }
 
     render() {
-        const goBackFunction = () => this.props.navigateTo(<PeoplePage navigateTo={this.props.navigateTo} />);
-        const navigateToCreateFunction = () => this.props.navigateTo(<CreatePersonPage goBack={goBackFunction} />);
-
         return (
             <div>
-                <button onClick={navigateToCreateFunction}>Create new</button>
+                <a href='/people/create'>Create new...</a>
                 <div>
                     {this.state.content}
                 </div>
@@ -74,5 +71,7 @@ class PeopleContent extends React.Component {
         </table>);
     }
 }
+
+App.render(<PeoplePage />);
 
 module.exports = PeoplePage;
