@@ -2,13 +2,16 @@ const React = require('react');
 const { createRoot } = require('react-dom/client');
 
 class App extends React.Component {
-    static render(page) {
-        const div = document.createElement('div');
-        document.body.appendChild(div);
+    static definePage(pageType) {
+        if (!window.pageType) {
+            window.pageType = pageType;
 
-        const app = <App>{page}</App>;
+            const div = document.createElement('div');
+            document.body.appendChild(div);
 
-        createRoot(div).render(app);
+            const Page = pageType;
+            createRoot(div).render(<App><Page /></App>);
+        }
     }
 
     render() {

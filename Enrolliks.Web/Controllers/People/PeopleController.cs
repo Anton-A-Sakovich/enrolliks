@@ -2,10 +2,9 @@
 using Enrolliks.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Enrolliks.Web.People
+namespace Enrolliks.Web.Controllers.People
 {
-    [ApiController]
-    public class PeopleController : ControllerBase
+    public class PeopleController : PageController
     {
         private readonly IPeopleRepository _repository;
 
@@ -14,15 +13,19 @@ namespace Enrolliks.Web.People
             _repository = storage;
         }
 
-        [HttpGet("[controller]/list")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> Index()
         {
             var people = await _repository.GetAllAsync();
-            return Ok(people);
+            return Page(people);
         }
 
-        [HttpPost("[controller]/create")]
-        public async Task<IActionResult> Create(CreatePersonModel personModel)
+        public IActionResult Create()
+        {
+            return Page();
+        }
+
+        [HttpPost("api/[controller]/create")]
+        public async Task<IActionResult> Create([FromBody]CreatePersonModel personModel)
         {
             if (string.IsNullOrWhiteSpace(personModel.Name))
             {
@@ -40,7 +43,7 @@ namespace Enrolliks.Web.People
             return Ok();
         }
 
-        [HttpDelete("[controller]/delete")]
+        [HttpDelete("api/[controller]/delete")]
         public async Task<IActionResult> Delete(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))

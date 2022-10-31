@@ -1,8 +1,8 @@
 const React = require('react');
-const axios = require('axios').default;
 const App = require('../app');
+const axios = require('axios').default;
 
-class CreatePersonPage extends React.Component {
+class CreatePage extends React.Component {
     constructor(props) {
         super(props);
 
@@ -17,7 +17,7 @@ class CreatePersonPage extends React.Component {
         try {
             this.setState({submitAllowed: false});
 
-            await axios.post('/people/create', {
+            await axios.post('/api/people/create', {
                 name: this.state.name
             });
 
@@ -46,6 +46,5 @@ class CreatePersonPage extends React.Component {
     }
 }
 
-App.render(<CreatePersonPage />);
-
-module.exports = CreatePersonPage;
+App.definePage(CreatePage);
+module.exports = CreatePage;

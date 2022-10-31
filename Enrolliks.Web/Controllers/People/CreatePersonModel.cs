@@ -1,4 +1,4 @@
-﻿namespace Enrolliks.Web.People
+﻿namespace Enrolliks.Web.Controllers.People
 {
     public class CreatePersonModel
     {

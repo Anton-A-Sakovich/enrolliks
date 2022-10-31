@@ -5,9 +5,9 @@ module.exports = {
     devtool: 'inline-source-map',
 
     entry: {
-        "home/index": './src/homePage.js',
-        "people/index": './src/people/peoplePage.js',
-        "people/create": './src/people/createPersonPage.js',
+        "home/index": './src/home/indexPage.js',
+        "people/index": './src/people/indexPage.js',
+        "people/create": './src/people/createPage.js',
     },
 
     output: {
@@ -47,14 +47,19 @@ module.exports = {
     },
 
     optimization: {
-        runtimeChunk: 'single',
-        moduleIds: 'deterministic',
         splitChunks: {
             cacheGroups: {
-                vendor: {
+                vendors: {
                     test: /[\\/]node_modules[\\/]/,
                     name: 'vendors',
                     chunks: 'all',
+                    enforce: true,
+                },
+                app: {
+                    test: /[\\/]src[\\/]app\.js/,
+                    name: 'app',
+                    chunks: 'all',
+                    enforce: true,
                 },
             },
         },

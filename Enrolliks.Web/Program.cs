@@ -23,7 +23,7 @@ namespace Enrolliks.Web
 
             app.UseStaticFiles();
             app.UseRouting();
-            app.MapControllers();
+            app.MapDefaultControllerRoute();
 
             app.Run();
         }
