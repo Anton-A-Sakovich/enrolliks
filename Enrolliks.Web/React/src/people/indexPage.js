@@ -22,7 +22,9 @@ class IndexPage extends React.Component {
     render() {
         return (
             <div>
-                <a href='/people/create'>Create new...</a>
+                <div>
+                    <CreatePersonComponent />
+                </div>
                 <div>
                     {this.state.content}
                 </div>
@@ -39,22 +41,78 @@ class EmptyContent extends React.Component {
 
 class PeopleContent extends React.Component {
     render() {
-        return (<table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                {this.props.people.map(person => <PersonRow person={person} />)}
-            </tbody>
-        </table>);
+        return (
+        <div className='panel'>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {this.props.people.map(person => <PersonRow key={person.name} person={person} />)}
+                </tbody>
+            </table>
+        </div>);
     }
 }
 
 class ErrorContent extends React.Component {
     render() {
         return <p>Error.</p>;
+    }
+}
+
+class CreatePersonComponent extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            editing: false,
+            name: '',
+        };
+    }
+
+    render() {
+        if (!this.state.editing) {
+            return <button onClick={() => this.handleCreateClick()}>Create</button>;
+        } else {
+            return (
+            <form>
+                <div className="panel">
+                    <div className='form-row'>
+                        <label className='form-label' htmlFor="name">Name</label>
+                        <input className='form-input' type="text" id="name" name="name" value={this.state.name} onChange={event => this.handleNameChange(event)} />
+                    </div>
+                    <div>
+                        <button onClick={() => this.handleSubmitClick()}>Create</button>
+                        <button onClick={() => this.handleCancelClick()}>Cancel</button>
+                    </div>
+                </div>
+            </form>);
+        }
+    }
+
+    handleNameChange(event) {
+        this.setState({
+            name: event.target.value,
+        });
+    }
+
+    handleCreateClick() {
+        this.setState({
+            editing: true,
+        });
+    }
+
+    handleCancelClick() {
+        this.setState({
+            editing: false,
+            name: '',
+        });
+    }
+
+    handleSubmitClick() {
     }
 }
 
