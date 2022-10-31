@@ -18,11 +18,11 @@ class App extends React.Component {
         return (
             <div>
                 <h1>Enrolliks</h1>
-                <nav>
+                <nav className='top-nav'>
                     <a href='/home'>Home</a>
                     <a href='/people'>People</a>
                 </nav>
-                {this.props.children}
+                <div className='content-area'>{this.props.children}</div>
             </div>
         );
     }
