@@ -3,7 +3,7 @@ const App = require('../app');
 
 class IndexPage extends React.Component {
     render() {
-        return <p>Home</p>;
+        return <p>There was a HOLE here. It's gone now.</p>;
     }
 }
 
