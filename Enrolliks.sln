@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enrolliks", "Enrolliks\Enrolliks.csproj", "{3F26149D-07B7-40C3-B647-86EA9B9A3078}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enrolliks", "Enrolliks\Enrolliks.csproj", "{3F26149D-07B7-40C3-B647-86EA9B9A3078}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enrolliks.Web", "Enrolliks.Web\Enrolliks.Web.csproj", "{589F14A6-A661-4523-B983-F99E6ABDAA2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enrolliks.Web", "Enrolliks.Web\Enrolliks.Web.csproj", "{589F14A6-A661-4523-B983-F99E6ABDAA2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enrolliks.Persistence", "Enrolliks.Persistence\Enrolliks.Persistence.csproj", "{FACDCAA8-7E96-4A3D-9DFD-D9EBC8B8F433}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enrolliks.Persistence", "Enrolliks.Persistence\Enrolliks.Persistence.csproj", "{FACDCAA8-7E96-4A3D-9DFD-D9EBC8B8F433}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enrolliks.Persistence.EntityFramework", "Enrolliks.Persistence.EntityFramework\Enrolliks.Persistence.EntityFramework.csproj", "{B785FEF7-0E67-43E6-A5C0-241432E9A78A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enrolliks.Persistence.EntityFramework", "Enrolliks.Persistence.EntityFramework\Enrolliks.Persistence.EntityFramework.csproj", "{B785FEF7-0E67-43E6-A5C0-241432E9A78A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enrolliks.Persistence.Tests", "Enrolliks.Persistence.Tests\Enrolliks.Persistence.Tests.csproj", "{F3651CDC-50F9-4DCD-9D57-DF0343B2D9CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{B785FEF7-0E67-43E6-A5C0-241432E9A78A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B785FEF7-0E67-43E6-A5C0-241432E9A78A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B785FEF7-0E67-43E6-A5C0-241432E9A78A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3651CDC-50F9-4DCD-9D57-DF0343B2D9CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3651CDC-50F9-4DCD-9D57-DF0343B2D9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3651CDC-50F9-4DCD-9D57-DF0343B2D9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3651CDC-50F9-4DCD-9D57-DF0343B2D9CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
