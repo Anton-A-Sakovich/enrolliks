@@ -1,16 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Enrolliks.Persistence
 {
     public interface IPeopleRepository
     {
-        Task CreateAsync(Person person);
+        Task<ICreatePersonResult> CreateAsync(Person person);
 
-        Task DeleteAsync(string name);
+        Task<IDeletePersonResult> DeleteAsync(string name);
 
-        Task<bool> ExistsAsync(string name);
+        Task<IExistsPersonResult> ExistsAsync(string name);
 
-        Task<IList<Person>> GetAllAsync();
+        Task<IGetAllPeopleResult> GetAllAsync();
+
+        Task<IUpdatePersonResult> UpdateAsync(Person person);
     }
 }
