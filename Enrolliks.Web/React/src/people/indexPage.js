@@ -1,5 +1,6 @@
 const React = require('react');
 const App = require('../app');
+const CreatePersonComponent = require('./createPersonComponent');
 const PersonRow = require('./personRow');
 
 class IndexPage extends React.Component {
@@ -39,6 +40,12 @@ class EmptyContent extends React.Component {
     }
 }
 
+class ErrorContent extends React.Component {
+    render() {
+        return <p>Error.</p>;
+    }
+}
+
 class PeopleContent extends React.Component {
     render() {
         return (
@@ -54,65 +61,6 @@ class PeopleContent extends React.Component {
                 </tbody>
             </table>
         </div>);
-    }
-}
-
-class ErrorContent extends React.Component {
-    render() {
-        return <p>Error.</p>;
-    }
-}
-
-class CreatePersonComponent extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            editing: false,
-            name: '',
-        };
-    }
-
-    render() {
-        if (!this.state.editing) {
-            return <button onClick={() => this.handleCreateClick()}>Create</button>;
-        } else {
-            return (
-            <form>
-                <div className="panel">
-                    <div className='form-row'>
-                        <label className='form-label' htmlFor="name">Name</label>
-                        <input className='form-input' type="text" id="name" name="name" value={this.state.name} onChange={event => this.handleNameChange(event)} />
-                    </div>
-                    <div>
-                        <button onClick={() => this.handleSubmitClick()}>Create</button>
-                        <button onClick={() => this.handleCancelClick()}>Cancel</button>
-                    </div>
-                </div>
-            </form>);
-        }
-    }
-
-    handleNameChange(event) {
-        this.setState({
-            name: event.target.value,
-        });
-    }
-
-    handleCreateClick() {
-        this.setState({
-            editing: true,
-        });
-    }
-
-    handleCancelClick() {
-        this.setState({
-            editing: false,
-            name: '',
-        });
-    }
-
-    handleSubmitClick() {
     }
 }
 
