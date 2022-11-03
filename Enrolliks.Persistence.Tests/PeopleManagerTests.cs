@@ -202,5 +202,116 @@ namespace Enrolliks.Persistence.Tests
                 });
             }
         }
+
+        [TestFixture]
+        public class DeleteTests
+        {
+            [Test]
+            public void ThrowsForNullName()
+            {
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var manager = new PeopleManager(repository.Object);
+                string name = null!;
+
+                Assert.That(async () => await manager.DeleteAsync(name), Throws.TypeOf<ArgumentNullException>());
+            }
+
+            [Test]
+            public void ReturnsRepositoryResult()
+            {
+                string name = "Mary Shepherd-Sunderland";
+                var repositoryResults = new IDeletePersonResult[]
+                {
+                    new IDeletePersonResult.NotFound(),
+                    new IDeletePersonResult.RepositoryFailure(new Exception()),
+                    new IDeletePersonResult.Success(),
+                };
+
+                Assert.Multiple(async () =>
+                {
+                    foreach (var repositoryResult in repositoryResults)
+                    {
+                        await ReturnsRepositoryResult(name, repositoryResult);
+                    }
+                });
+            }
+
+            private static async Task ReturnsRepositoryResult(string name, IDeletePersonResult repositoryResult)
+            {
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                repository.Setup(r => r.DeleteAsync(name)).ReturnsAsync(repositoryResult);
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.DeleteAsync(name);
+                var expected = repositoryResult;
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.SameAs(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+
+            [Test]
+            public async Task DetectsMissingPersonManually()
+            {
+                string name = "Not found";
+
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                repository.Setup(r => r.DeleteAsync(name)).ThrowsAsync(new Exception());
+                repository.Setup(r => r.ExistsAsync(name)).ReturnsAsync(new IExistsPersonResult.Success(Exists: false));
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.DeleteAsync(name);
+                var expected = new IDeletePersonResult.NotFound();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+
+            [Test]
+            public async Task FallsBackToRepositoryFailureWhenExistsReturnsTrue()
+            {
+                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.Success(Exists: true)));
+            }
+
+            [Test]
+            public async Task FallsBackToRepositoryFailureWhenExistsReturnsFailure()
+            {
+                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())));
+            }
+
+            [Test]
+            public async Task FallsBackToRepositoryFailureWhenExistsThrows()
+            {
+                await FallsBackToRepositoryFailureWhen(exists => exists.ThrowsAsync(new Exception()));
+            }
+
+            private static async Task FallsBackToRepositoryFailureWhen(Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsReturns)
+            {
+                string name = "Mary Shepherd-Sunderland";
+
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var deleteException = new Exception();
+                repository.Setup(r => r.DeleteAsync(name)).ThrowsAsync(deleteException);
+                existsReturns(repository.Setup(r => r.ExistsAsync(name)));
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.DeleteAsync(name);
+                var expected = new IDeletePersonResult.RepositoryFailure(deleteException);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+        }
     }
 }
