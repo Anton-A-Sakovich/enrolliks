@@ -1,6 +1,6 @@
 ﻿namespace Enrolliks.Persistence
 {
-    public class PersonValidationErrors
+    public record class PersonValidationErrors
     {
         public INameValidationError? Name { get; init; }
     }
