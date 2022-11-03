@@ -48,14 +48,30 @@ namespace Enrolliks.Persistence
 
         public async Task<IDeletePersonResult> DeleteAsync(string name)
         {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
+            Exception deleteException;
             try
             {
                 return await _repository.DeleteAsync(name);
             }
             catch (Exception exception)
             {
-                return new IDeletePersonResult.RepositoryFailure(exception);
+                deleteException = exception;
             }
+
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(name);
+                if (existsResult is IExistsPersonResult.Success(bool exists) && !exists)
+                    return new IDeletePersonResult.NotFound();
+            }
+            catch
+            {
+                // Ignore the exists exception and return the original delete exception if not able to reliably detect a missing person.
+            }
+
+            return new IDeletePersonResult.RepositoryFailure(deleteException);
         }
 
         public async Task<IExistsPersonResult> ExistsAsync(string name)
