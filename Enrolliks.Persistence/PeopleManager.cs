@@ -101,6 +101,7 @@ namespace Enrolliks.Persistence
         {
             INameValidationError? nameError = person.Name switch
             {
+                null => new INameValidationError.Empty(),
                 string s when string.IsNullOrWhiteSpace(s) => new INameValidationError.Empty(),
                 string s when s.Length < _minNameLength => new INameValidationError.TooShort(_minNameLength),
                 string s when s.Length > _maxNameLength => new INameValidationError.TooLong(_maxNameLength),
