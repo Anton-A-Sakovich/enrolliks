@@ -23,4 +23,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Enrolliks.Persistence\Enrolliks.Persistence.csproj" />
+  </ItemGroup>
+
 </Project>
