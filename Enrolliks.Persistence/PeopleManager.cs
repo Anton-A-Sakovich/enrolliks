@@ -17,17 +17,33 @@ namespace Enrolliks.Persistence
 
         public async Task<ICreatePersonResult> CreateAsync(Person person)
         {
+            if (person is null) throw new ArgumentNullException(nameof(person));
+
             if (Validate(person) is PersonValidationErrors validationErrors)
                 return new ICreatePersonResult.ValidationFailure(validationErrors);
 
+            Exception createException;
             try
             {
                 return await _repository.CreateAsync(person);
             }
             catch (Exception exception)
             {
-                return new ICreatePersonResult.RepositoryFailure(exception);
+                createException = exception;
             }
+
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(person.Name);
+                if (existsResult is IExistsPersonResult.Success(bool exists) && exists)
+                    return new ICreatePersonResult.Conflict();
+            }
+            catch
+            {
+                // Ignore the exists exception and return the original create exception if not able to reliably detect a conflict.
+            }
+
+            return new ICreatePersonResult.RepositoryFailure(createException);
         }
 
         public async Task<IDeletePersonResult> DeleteAsync(string name)
