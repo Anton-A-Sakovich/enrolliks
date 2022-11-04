@@ -100,17 +100,33 @@ namespace Enrolliks.Persistence
 
         public async Task<IUpdatePersonResult> UpdateAsync(Person person)
         {
+            if (person is null) throw new ArgumentNullException(nameof(person));
+
             if (Validate(person) is PersonValidationErrors validationErrors)
                 return new IUpdatePersonResult.ValidationFailure(validationErrors);
 
+            Exception originalException;
             try
             {
                 return await _repository.UpdateAsync(person);
             }
             catch (Exception exception)
             {
-                return new IUpdatePersonResult.RepositoryFailure(exception);
+                originalException = exception;
             }
+
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(person.Name);
+                if (existsResult is IExistsPersonResult.Success(bool exists))
+                    return exists ? new IUpdatePersonResult.Conflict() : new IUpdatePersonResult.NotFound();
+            }
+            catch
+            {
+                // Ignore the exists exception and return the original exception if not able to reliably detect a missing or conflicting person.
+            }
+
+            return new IUpdatePersonResult.RepositoryFailure(originalException);
         }
 
         private static PersonValidationErrors? Validate(Person person)
