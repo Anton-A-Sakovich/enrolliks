@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Moq;
@@ -11,6 +12,140 @@ namespace Enrolliks.Persistence.Tests
     [TestFixture]
     public class PeopleManagerTests
     {
+        private static async Task ReturnsRepositoryResult<TResult>(TResult repositoryResult,
+            Expression<Func<IPeopleRepository, Task<TResult>>> repositoryMethod,
+            Func<PeopleManager, Task<TResult>> managerMethod)
+        {
+            var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+            repository.Setup(repositoryMethod).ReturnsAsync(repositoryResult);
+
+            var manager = new PeopleManager(repository.Object);
+
+            var actual = await managerMethod.Invoke(manager);
+            var expected = repositoryResult;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(actual, Is.SameAs(expected));
+                Assert.That(repository.VerifyAll, Throws.Nothing);
+            });
+        }
+
+        private static async Task ReturnsOriginalRepositoryFailure<TResult, TFailedResult>(
+            Func<Person, Func<PeopleManager, Task<TResult>>> managerMethod,
+            Func<Person, Expression<Func<IPeopleRepository, Task<TResult>>>> repositoryMethodToThrow,
+            Func<Person, Action<Mock<IPeopleRepository>>> additionalRepositorySetup,
+            Func<Exception, TFailedResult> failureFactory
+            )
+            where TFailedResult : TResult
+        {
+            var person = new Person(Name: "Joe");
+
+            var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+
+            var originalException = new Exception();
+            repository.Setup(repositoryMethodToThrow(person)).ThrowsAsync(originalException);
+            additionalRepositorySetup(person)(repository);
+
+            var manager = new PeopleManager(repository.Object);
+
+            var actual = await managerMethod(person)(manager);
+            var expected = failureFactory(originalException);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(actual, Is.EqualTo(expected));
+                Assert.That(repository.VerifyAll, Throws.Nothing);
+            });
+        }
+
+        public class ValidationTests
+        {
+            public static IEnumerable<object?[]> GetEmptyNames()
+            {
+                return new object?[][]
+                {
+                    new object?[] { null },
+                    new object?[] { "" },
+                    new object?[] { " " },
+                };
+            }
+
+            public static IEnumerable<object?[]> GetShortNames()
+            {
+                return new object?[][]
+                {
+                    new object?[] { "a" },
+                    new object?[] { "ab" },
+                };
+            }
+
+            public static IEnumerable<object?[]> GetLongNames()
+            {
+                yield return new object?[] { GetLongString(129) };
+                yield return new object?[] { GetLongString(130) };
+            }
+
+            private static string GetLongString(int length)
+            {
+                int firstLetter = 'a';
+                int lettersCount = 'z' - 'a' + 1;
+                var chars = Enumerable.Range(0, length).Select(i => (char)(firstLetter + (i % lettersCount)));
+                return string.Concat(chars);
+            }
+
+            public static async Task ReturnsValidationErrorForEmptyName<TResult>(string name,
+                Func<IPeopleManager, Person, Task<TResult>> managerMethod,
+                Func<PersonValidationErrors, TResult> resultFactory)
+            {
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var manager = new PeopleManager(repository.Object);
+                var person = new Person(name);
+
+                var actual = await managerMethod.Invoke(manager, person);
+                var expected = resultFactory.Invoke(new PersonValidationErrors
+                {
+                    Name = new INameValidationError.Empty()
+                });
+
+                Assert.That(actual, Is.EqualTo(expected));
+            }
+
+            public static async Task ReturnsValidationErrorForShortName<TResult>(string name,
+                Func<IPeopleManager, Person, Task<TResult>> managerMethod,
+                Func<PersonValidationErrors, TResult> resultFactory)
+            {
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var manager = new PeopleManager(repository.Object);
+                var person = new Person(name);
+
+                var actual = await managerMethod.Invoke(manager, person);
+                var expected = resultFactory.Invoke(new PersonValidationErrors
+                {
+                    Name = new INameValidationError.TooShort(MinCharactersRequired: 3)
+                });
+
+                Assert.That(actual, Is.EqualTo(expected));
+            }
+
+            public static async Task ReturnsValidationErrorLongName<TResult>(string name,
+                Func<IPeopleManager, Person, Task<TResult>> managerMethod,
+                Func<PersonValidationErrors, TResult> resultFactory)
+            {
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var manager = new PeopleManager(repository.Object);
+                var person = new Person(name);
+
+                var actual = await managerMethod.Invoke(manager, person);
+                var expected = resultFactory.Invoke(new PersonValidationErrors
+                {
+                    Name = new INameValidationError.TooLong(MaxCharactersAllowed: 128)
+                });
+
+                Assert.That(actual, Is.EqualTo(expected));
+            }
+        }
+
         [TestFixture]
         public class CreateTests
         {
@@ -28,87 +163,34 @@ namespace Enrolliks.Persistence.Tests
                 });
             }
 
-            [TestCase(null)]
-            [TestCase("")]
-            [TestCase(" ")]
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetEmptyNames))]
             public async Task ReturnsValidationErrorForEmptyName(string name)
             {
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                var manager = new PeopleManager(repository.Object);
-                var person = new Person(name);
-
-                var actual = await manager.CreateAsync(person);
-                var expected = new ICreatePersonResult.ValidationFailure(new PersonValidationErrors
-                {
-                    Name = new INameValidationError.Empty()
-                });
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.EqualTo(expected));
-                    Assert.That(repository.VerifyNoOtherCalls, Throws.Nothing);
-                });
+                await ValidationTests.ReturnsValidationErrorForEmptyName(name,
+                    (manager, person) => manager.CreateAsync(person),
+                    validationErrors => new ICreatePersonResult.ValidationFailure(validationErrors));
             }
 
-            [TestCase("a")]
-            [TestCase("ab")]
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetShortNames))]
             public async Task ReturnsValidationErrorForShortName(string name)
             {
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                var manager = new PeopleManager(repository.Object);
-                var person = new Person(name);
-
-                var actual = await manager.CreateAsync(person);
-                var expected = new ICreatePersonResult.ValidationFailure(new PersonValidationErrors
-                {
-                    Name = new INameValidationError.TooShort(MinCharactersRequired: 3)
-                });
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.EqualTo(expected));
-                    Assert.That(repository.VerifyNoOtherCalls, Throws.Nothing);
-                });
+                await ValidationTests.ReturnsValidationErrorForShortName(name,
+                    (manager, person) => manager.CreateAsync(person),
+                    validationErrors => new ICreatePersonResult.ValidationFailure(validationErrors));
             }
 
-            [TestCaseSource(nameof(GetLongNames))]
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetLongNames))]
             public async Task ReturnsValidationErrorLongName(string name)
             {
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                var manager = new PeopleManager(repository.Object);
-                var person = new Person(name);
-
-                var actual = await manager.CreateAsync(person);
-                var expected = new ICreatePersonResult.ValidationFailure(new PersonValidationErrors
-                {
-                    Name = new INameValidationError.TooLong(MaxCharactersAllowed: 128)
-                });
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.EqualTo(expected));
-                    Assert.That(repository.VerifyNoOtherCalls, Throws.Nothing);
-                });
-            }
-
-            private static IEnumerable<object[]> GetLongNames()
-            {
-                yield return new object[] { GetLongString(129) };
-                yield return new object[] { GetLongString(130) };
-            }
-
-            private static string GetLongString(int length)
-            {
-                int firstLetter = 'a';
-                int lettersCount = 'z' - 'a' + 1;
-                var chars = Enumerable.Range(0, length).Select(i => (char)(firstLetter + (i % lettersCount)));
-                return string.Concat(chars);
+                await ValidationTests.ReturnsValidationErrorLongName(name,
+                    (manager, person) => manager.CreateAsync(person),
+                    validationErrors => new ICreatePersonResult.ValidationFailure(validationErrors));
             }
 
             [Test]
             public void ReturnsRepositoryResult()
             {
-                var person = new Person(Name: "Mary Shepherd-Sunderland");
+                var person = new Person(Name: "Joe");
                 var repositoryResults = new ICreatePersonResult[]
                 {
                     new ICreatePersonResult.Conflict(),
@@ -120,25 +202,10 @@ namespace Enrolliks.Persistence.Tests
                 {
                     foreach (var repositoryResult in repositoryResults)
                     {
-                        await ReturnsRepositoryResult(person, repositoryResult);
+                        await PeopleManagerTests.ReturnsRepositoryResult(repositoryResult,
+                            repository => repository.CreateAsync(person),
+                            manager => manager.CreateAsync(person));
                     }
-                });
-            }
-
-            private static async Task ReturnsRepositoryResult(Person person, ICreatePersonResult repositoryResult)
-            {
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                repository.Setup(r => r.CreateAsync(person)).ReturnsAsync(repositoryResult);
-
-                var manager = new PeopleManager(repository.Object);
-
-                var actual = await manager.CreateAsync(person);
-                var expected = repositoryResult;
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.SameAs(expected));
-                    Assert.That(repository.VerifyAll, Throws.Nothing);
                 });
             }
 
@@ -164,42 +231,33 @@ namespace Enrolliks.Persistence.Tests
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsReturnsFalse()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsReturnsFalse()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.Success(Exists: false)));
+                await ReturnsOriginalRepositoryFailure<ICreatePersonResult, ICreatePersonResult.RepositoryFailure>(
+                    person => manager => manager.CreateAsync(person),
+                    person => repository => repository.CreateAsync(person),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ReturnsAsync(new IExistsPersonResult.Success(Exists: false)),
+                    exception => new ICreatePersonResult.RepositoryFailure(exception));
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsReturnsFailure()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsReturnsFailure()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())));
+                await ReturnsOriginalRepositoryFailure<ICreatePersonResult, ICreatePersonResult.RepositoryFailure>(
+                    person => manager => manager.CreateAsync(person),
+                    person => repository => repository.CreateAsync(person),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())),
+                    exception => new ICreatePersonResult.RepositoryFailure(exception));
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsThrows()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsThrows()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ThrowsAsync(new Exception()));
-            }
-
-            private static async Task FallsBackToRepositoryFailureWhen(Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsReturns)
-            {
-                var person = new Person(Name: "Mary Shepherd-Sunderland");
-
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                var createException = new Exception();
-                repository.Setup(r => r.CreateAsync(person)).ThrowsAsync(createException);
-                existsReturns(repository.Setup(r => r.ExistsAsync(person.Name)));
-
-                var manager = new PeopleManager(repository.Object);
-
-                var actual = await manager.CreateAsync(person);
-                var expected = new ICreatePersonResult.RepositoryFailure(createException);
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.EqualTo(expected));
-                    Assert.That(repository.VerifyAll, Throws.Nothing);
-                });
+                await ReturnsOriginalRepositoryFailure<ICreatePersonResult, ICreatePersonResult.RepositoryFailure>(
+                    person => manager => manager.CreateAsync(person),
+                    person => repository => repository.CreateAsync(person),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ThrowsAsync(new Exception()),
+                    exception => new ICreatePersonResult.RepositoryFailure(exception));
             }
         }
 
@@ -219,7 +277,7 @@ namespace Enrolliks.Persistence.Tests
             [Test]
             public void ReturnsRepositoryResult()
             {
-                string name = "Mary Shepherd-Sunderland";
+                string name = "Joe";
                 var repositoryResults = new IDeletePersonResult[]
                 {
                     new IDeletePersonResult.NotFound(),
@@ -231,25 +289,10 @@ namespace Enrolliks.Persistence.Tests
                 {
                     foreach (var repositoryResult in repositoryResults)
                     {
-                        await ReturnsRepositoryResult(name, repositoryResult);
+                        await PeopleManagerTests.ReturnsRepositoryResult(repositoryResult,
+                            repository => repository.DeleteAsync(name),
+                            manager => manager.DeleteAsync(name));
                     }
-                });
-            }
-
-            private static async Task ReturnsRepositoryResult(string name, IDeletePersonResult repositoryResult)
-            {
-                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                repository.Setup(r => r.DeleteAsync(name)).ReturnsAsync(repositoryResult);
-
-                var manager = new PeopleManager(repository.Object);
-
-                var actual = await manager.DeleteAsync(name);
-                var expected = repositoryResult;
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(actual, Is.SameAs(expected));
-                    Assert.That(repository.VerifyAll, Throws.Nothing);
                 });
             }
 
@@ -275,42 +318,158 @@ namespace Enrolliks.Persistence.Tests
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsReturnsTrue()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsReturnsTrue()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.Success(Exists: true)));
+                await ReturnsOriginalRepositoryFailure<IDeletePersonResult, IDeletePersonResult.RepositoryFailure>(
+                    person => manager => manager.DeleteAsync(person.Name),
+                    person => repository => repository.DeleteAsync(person.Name),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ReturnsAsync(new IExistsPersonResult.Success(Exists: true)),
+                    exception => new IDeletePersonResult.RepositoryFailure(exception));
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsReturnsFailure()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsReturnsFailure()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())));
+                await ReturnsOriginalRepositoryFailure<IDeletePersonResult, IDeletePersonResult.RepositoryFailure>(
+                    person => manager => manager.DeleteAsync(person.Name),
+                    person => repository => repository.DeleteAsync(person.Name),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())),
+                    exception => new IDeletePersonResult.RepositoryFailure(exception));
             }
 
             [Test]
-            public async Task FallsBackToRepositoryFailureWhenExistsThrows()
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsThrows()
             {
-                await FallsBackToRepositoryFailureWhen(exists => exists.ThrowsAsync(new Exception()));
+                await ReturnsOriginalRepositoryFailure<IDeletePersonResult, IDeletePersonResult.RepositoryFailure>(
+                    person => manager => manager.DeleteAsync(person.Name),
+                    person => repository => repository.DeleteAsync(person.Name),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ThrowsAsync(new Exception()),
+                    exception => new IDeletePersonResult.RepositoryFailure(exception));
+            }
+        }
+
+        [TestFixture]
+        public class UpdateTests
+        {
+            [Test]
+            public void ThrowsForNullPerson()
+            {
+                Person person = null!;
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                var manager = new PeopleManager(repository.Object);
+
+                Assert.That(async () => await manager.UpdateAsync(person), Throws.TypeOf<ArgumentNullException>());
             }
 
-            private static async Task FallsBackToRepositoryFailureWhen(Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsReturns)
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetEmptyNames))]
+            public async Task ReturnsValidationErrorForEmptyName(string name)
             {
-                string name = "Mary Shepherd-Sunderland";
+                await ValidationTests.ReturnsValidationErrorForEmptyName(name,
+                    (manager, person) => manager.UpdateAsync(person),
+                    validationErrors => new IUpdatePersonResult.ValidationFailure(validationErrors));
+            }
+
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetShortNames))]
+            public async Task ReturnsValidationErrorForShortName(string name)
+            {
+                await ValidationTests.ReturnsValidationErrorForShortName(name,
+                    (manager, person) => manager.UpdateAsync(person),
+                    validationErrors => new IUpdatePersonResult.ValidationFailure(validationErrors));
+            }
+
+            [TestCaseSource(typeof(ValidationTests), nameof(ValidationTests.GetLongNames))]
+            public async Task ReturnsValidationErrorLongName(string name)
+            {
+                await ValidationTests.ReturnsValidationErrorLongName(name,
+                    (manager, person) => manager.UpdateAsync(person),
+                    validationErrors => new IUpdatePersonResult.ValidationFailure(validationErrors));
+            }
+
+            [Test]
+            public void ReturnsRepositoryResult()
+            {
+                var originalPerson = new Person("Joe");
+                var updatedPerson = new Person("Joe1");
+
+                var repositoryResults = new IUpdatePersonResult[]
+                {
+                    new IUpdatePersonResult.Conflict(),
+                    new IUpdatePersonResult.NotFound(),
+                    new IUpdatePersonResult.RepositoryFailure(new Exception()),
+                    new IUpdatePersonResult.Success(updatedPerson),
+                };
+
+                Assert.Multiple(async () =>
+                {
+                    foreach (var repositoryResult in repositoryResults)
+                    {
+                        await PeopleManagerTests.ReturnsRepositoryResult(repositoryResult,
+                            repository => repository.UpdateAsync(originalPerson),
+                            manager => manager.UpdateAsync(originalPerson));
+                    }
+                });
+            }
+
+            [Test]
+            public async Task DetectsMissingPersonManually()
+            {
+                var originalPerson = new Person(Name: "Not found.");
 
                 var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
-                var deleteException = new Exception();
-                repository.Setup(r => r.DeleteAsync(name)).ThrowsAsync(deleteException);
-                existsReturns(repository.Setup(r => r.ExistsAsync(name)));
+                repository.Setup(r => r.UpdateAsync(originalPerson)).ThrowsAsync(new Exception());
+                repository.Setup(r => r.ExistsAsync(originalPerson.Name)).ReturnsAsync(new IExistsPersonResult.Success(Exists: false));
 
                 var manager = new PeopleManager(repository.Object);
 
-                var actual = await manager.DeleteAsync(name);
-                var expected = new IDeletePersonResult.RepositoryFailure(deleteException);
+                var actual = await manager.UpdateAsync(originalPerson);
+                var expected = new IUpdatePersonResult.NotFound();
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(actual, Is.EqualTo(expected));
                     Assert.That(repository.VerifyAll, Throws.Nothing);
                 });
+            }
+
+            [Test]
+            public async Task DetectsConflictingPersonManually()
+            {
+                var originalPerson = new Person(Name: "Not found.");
+
+                var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
+                repository.Setup(r => r.UpdateAsync(originalPerson)).ThrowsAsync(new Exception());
+                repository.Setup(r => r.ExistsAsync(originalPerson.Name)).ReturnsAsync(new IExistsPersonResult.Success(Exists: true));
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.UpdateAsync(originalPerson);
+                var expected = new IUpdatePersonResult.Conflict();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+
+            [Test]
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsReturnsFailure()
+            {
+                await ReturnsOriginalRepositoryFailure<IUpdatePersonResult, IUpdatePersonResult.RepositoryFailure>(
+                    person => manager => manager.UpdateAsync(person),
+                    person => repository => repository.UpdateAsync(person),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception())),
+                    exception => new IUpdatePersonResult.RepositoryFailure(exception));
+            }
+
+            [Test]
+            public async Task ReturnsOriginalRepositoryFailureWhenExistsThrows()
+            {
+                await ReturnsOriginalRepositoryFailure<IUpdatePersonResult, IUpdatePersonResult.RepositoryFailure>(
+                    person => manager => manager.UpdateAsync(person),
+                    person => repository => repository.UpdateAsync(person),
+                    person => repository => repository.Setup(r => r.ExistsAsync(person.Name)).ThrowsAsync(new Exception()),
+                    exception => new IUpdatePersonResult.RepositoryFailure(exception));
             }
         }
     }
