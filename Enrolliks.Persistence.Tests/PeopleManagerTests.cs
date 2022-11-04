@@ -472,5 +472,110 @@ namespace Enrolliks.Persistence.Tests
                     exception => new IUpdatePersonResult.RepositoryFailure(exception));
             }
         }
+
+        [TestFixture]
+        public class GetAllTests
+        {
+            [Test]
+            public void ReturnsRepositoryResult()
+            {
+                var repositoryResults = new IGetAllPeopleResult[]
+                {
+                    new IGetAllPeopleResult.RepositoryFailure(new Exception()),
+                    new IGetAllPeopleResult.Success(new List<Person>()),
+                };
+
+                Assert.Multiple(async () =>
+                {
+                    foreach (var repositoryResult in repositoryResults)
+                    {
+                        await PeopleManagerTests.ReturnsRepositoryResult(repositoryResult,
+                            repository => repository.GetAllAsync(),
+                            manager => manager.GetAllAsync());
+                    }
+                });
+            }
+
+            [Test]
+            public async Task ReturnsRepositoryFailure()
+            {
+                var repository = new Mock<IPeopleRepository>();
+
+                var exception = new Exception();
+                repository.Setup(r => r.GetAllAsync()).ThrowsAsync(exception);
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.GetAllAsync();
+                var expected = new IGetAllPeopleResult.RepositoryFailure(exception);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+        }
+
+        [TestFixture]
+        public class ExistsTests
+        {
+            [Test]
+            public void ThrowsForNullName()
+            {
+                string name = null!;
+                var repository = new Mock<IPeopleRepository>();
+                var manager = new PeopleManager(repository.Object);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(async () => await manager.ExistsAsync(name), Throws.TypeOf<ArgumentNullException>());
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+
+            [Test]
+            public void ReturnsRepositoryResult()
+            {
+                string name = "Joe";
+                var repositoryResults = new IExistsPersonResult[]
+                {
+                    new IExistsPersonResult.RepositoryFailure(new Exception()),
+                    new IExistsPersonResult.Success(Exists: true),
+                    new IExistsPersonResult.Success(Exists: false),
+                };
+
+                Assert.Multiple(async () =>
+                {
+                    foreach (var repositoryResult in repositoryResults)
+                    {
+                        await PeopleManagerTests.ReturnsRepositoryResult(repositoryResult,
+                            repository => repository.ExistsAsync(name),
+                            manager => manager.ExistsAsync(name));
+                    }
+                });
+            }
+
+            [Test]
+            public async Task ReturnsRepositoryFailure()
+            {
+                string name = "Joe";
+                var repository = new Mock<IPeopleRepository>();
+
+                var exception = new Exception();
+                repository.Setup(r => r.ExistsAsync(name)).ThrowsAsync(exception);
+
+                var manager = new PeopleManager(repository.Object);
+
+                var actual = await manager.ExistsAsync(name);
+                var expected = new IExistsPersonResult.RepositoryFailure(exception);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    Assert.That(repository.VerifyAll, Throws.Nothing);
+                });
+            }
+        }
     }
 }
