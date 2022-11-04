@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Enrolliks.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,59 +7,47 @@ namespace Enrolliks.Web.Controllers.People
 {
     public class PeopleController : PageController
     {
-        private readonly IPeopleRepository _repository;
+        private readonly IPeopleManager _manager;
 
-        public PeopleController(IPeopleRepository storage)
+        public PeopleController(IPeopleManager manager)
         {
-            _repository = storage;
+            _manager = manager;
         }
 
         public async Task<IActionResult> Index()
         {
-            var people = await _repository.GetAllAsync();
-            return Page(people);
-        }
-
-        public IActionResult Create()
-        {
-            return Page();
+            var peopleResult = await _manager.GetAllAsync();
+            var peopleDto = new GetAllPeopleResultModel(peopleResult);
+            return Page(peopleDto);
         }
 
         [HttpPost("api/[controller]/create")]
         public async Task<IActionResult> Create([FromBody]CreatePersonModel personModel)
         {
-            if (string.IsNullOrWhiteSpace(personModel.Name))
-            {
-                return StatusCode(400);
-            }
+            var originalPerson = new Person(Name: personModel.Name!);
 
-            bool exists = await _repository.ExistsAsync(personModel.Name);
-            if (exists)
+            var createResult = await _manager.CreateAsync(originalPerson);
+            return createResult switch
             {
-                return StatusCode(409);
-            }
-
-            var person = new Person(personModel.Name);
-            await _repository.CreateAsync(person);
-            return Ok();
+                ICreatePersonResult.Success(var createdPerson) => Ok(createdPerson),
+                ICreatePersonResult.Conflict => Conflict(),
+                ICreatePersonResult.RepositoryFailure => StatusCode(500),
+                ICreatePersonResult.ValidationFailure(var errors) => BadRequest(errors),
+                _ => throw new ApplicationException("The switch cases were incomplete.")
+            };
         }
 
         [HttpDelete("api/[controller]/delete")]
-        public async Task<IActionResult> Delete(string? name)
+        public async Task<IActionResult> Delete([FromBody]string? name)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            var deleteResult = await _manager.DeleteAsync(name!);
+            return deleteResult switch
             {
-                return StatusCode(400);
-            }
-
-            bool exists = await _repository.ExistsAsync(name);
-            if (!exists)
-            {
-                return StatusCode(404);
-            }
-
-            await _repository.DeleteAsync(name);
-            return Ok();
+                IDeletePersonResult.NotFound => NotFound(),
+                IDeletePersonResult.RepositoryFailure => StatusCode(500),
+                IDeletePersonResult.Success => NoContent(),
+                _ => throw new ApplicationException("The switch cases were incomplete.")
+            };
         }
     }
 }
