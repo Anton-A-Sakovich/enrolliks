@@ -76,6 +76,8 @@ namespace Enrolliks.Persistence
 
         public async Task<IExistsPersonResult> ExistsAsync(string name)
         {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
             try
             {
                 return await _repository.ExistsAsync(name);
