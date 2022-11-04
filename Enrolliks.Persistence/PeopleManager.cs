@@ -22,14 +22,14 @@ namespace Enrolliks.Persistence
             if (Validate(person) is PersonValidationErrors validationErrors)
                 return new ICreatePersonResult.ValidationFailure(validationErrors);
 
-            Exception createException;
+            Exception originalException;
             try
             {
                 return await _repository.CreateAsync(person);
             }
             catch (Exception exception)
             {
-                createException = exception;
+                originalException = exception;
             }
 
             try
@@ -40,24 +40,24 @@ namespace Enrolliks.Persistence
             }
             catch
             {
-                // Ignore the exists exception and return the original create exception if not able to reliably detect a conflict.
+                // Ignore the exists exception and return the original exception if not able to reliably detect a conflict.
             }
 
-            return new ICreatePersonResult.RepositoryFailure(createException);
+            return new ICreatePersonResult.RepositoryFailure(originalException);
         }
 
         public async Task<IDeletePersonResult> DeleteAsync(string name)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
-            Exception deleteException;
+            Exception originalException;
             try
             {
                 return await _repository.DeleteAsync(name);
             }
             catch (Exception exception)
             {
-                deleteException = exception;
+                originalException = exception;
             }
 
             try
@@ -68,10 +68,10 @@ namespace Enrolliks.Persistence
             }
             catch
             {
-                // Ignore the exists exception and return the original delete exception if not able to reliably detect a missing person.
+                // Ignore the exists exception and return the original exception if not able to reliably detect a missing person.
             }
 
-            return new IDeletePersonResult.RepositoryFailure(deleteException);
+            return new IDeletePersonResult.RepositoryFailure(originalException);
         }
 
         public async Task<IExistsPersonResult> ExistsAsync(string name)
