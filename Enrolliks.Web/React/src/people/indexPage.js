@@ -2,18 +2,25 @@ const React = require('react');
 const App = require('../app');
 const CreatePersonComponent = require('./createPersonComponent');
 const PersonRow = require('./personRow');
+const getData = require('../getData');
+
+const success = 0;
+const failure = 1;
 
 class IndexPage extends React.Component {
     constructor(props) {
         super(props);
 
         let content;
-        if (!window.data || !window.data?.length)
+        const data = getData();
+        if (data === null || !('type' in data) || data.type === failure)
             content = <ErrorContent />;
-        else if (window.data.length === 0)
-            content = <EmptyContent />;
+        else if (data.type === success)
+            content = data.people.length === 0
+                ? <EmptyContent />
+                : <PeopleContent people={data.people} />;
         else
-            content = <PeopleContent people={window.data} />;
+            content = <ErrorContent />;
 
         this.state = {
             content: content,
