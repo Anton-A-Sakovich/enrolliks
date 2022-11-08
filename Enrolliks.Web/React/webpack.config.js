@@ -5,9 +5,8 @@ module.exports = {
     devtool: 'inline-source-map',
 
     entry: {
-        "home/index": './src/home/indexPage.js',
-        "people/index": './src/people/indexPage.js',
-        "people/create": './src/people/createPage.js',
+        "home/index": './src/home/index.js',
+        "people/index": './src/people/index.js',
     },
 
     output: {

@@ -1,24 +1,22 @@
 const React = require('react');
-const App = require('../app');
-const CreatePersonComponent = require('./createPersonComponent');
+const CreatePersonForm = require('./createPersonForm');
 const PersonRow = require('./personRow');
-const getData = require('../getData');
 
 const success = 0;
 const failure = 1;
 
-class IndexPage extends React.Component {
+module.exports = class PeoplePage extends React.Component {
     constructor(props) {
         super(props);
 
         let content;
-        const data = getData();
-        if (data === null || !('type' in data) || data.type === failure)
+        const args = this.props.args;
+        if (args === null || !('type' in args) || args.type === failure)
             content = <ErrorContent />;
-        else if (data.type === success)
-            content = data.people.length === 0
+        else if (args.type === success)
+            content = args.people.length === 0
                 ? <EmptyContent />
-                : <PeopleContent people={data.people} />;
+                : <PeopleContent people={args.people} />;
         else
             content = <ErrorContent />;
 
@@ -31,7 +29,7 @@ class IndexPage extends React.Component {
         return (
             <div>
                 <div>
-                    <CreatePersonComponent />
+                    <CreatePersonForm />
                 </div>
                 <div>
                     {this.state.content}
@@ -70,6 +68,3 @@ class PeopleContent extends React.Component {
         </div>);
     }
 }
-
-App.definePage(IndexPage);
-module.exports = IndexPage;

@@ -1,31 +1,27 @@
 const React = require('react');
-const { createRoot } = require('react-dom/client');
 
-class App extends React.Component {
-    static definePage(pageType) {
-        if (!window.pageType) {
-            window.pageType = pageType;
+module.exports = class App extends React.Component {
+    constructor(props) {
+        super(props);
 
-            const div = document.createElement('div');
-            document.body.appendChild(div);
-
-            const Page = pageType;
-            createRoot(div).render(<App><Page /></App>);
-        }
+        this.state = {
+            data: ("data" in window) ? window.data : null,
+        };
     }
 
     render() {
+        const Page = this.props.pageType;
         return (
-            <div>
+            <>
                 <h1>Enrolliks</h1>
                 <nav className='top-nav'>
                     <a href='/home'>Home</a>
                     <a href='/people'>People</a>
                 </nav>
-                <div className='content-area'>{this.props.children}</div>
-            </div>
+                <div className='content-area'>
+                    <Page args={this.state.data} />
+                </div>
+            </>
         );
     }
 }
-
-module.exports = App;

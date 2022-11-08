@@ -1,6 +1,6 @@
 const React = require('react');
 
-class CreatePersonComponent extends React.Component {
+module.exports = class CreatePersonForm extends React.Component {
     constructor(props) {
         super(props);
 
@@ -57,5 +57,3 @@ class CreatePersonComponent extends React.Component {
     handleSubmitClick() {
     }
 }
-
-module.exports = CreatePersonComponent;
