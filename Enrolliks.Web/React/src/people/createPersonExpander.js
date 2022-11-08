@@ -26,7 +26,7 @@ class CreatePersonForm extends React.Component {
 
         this.state = {
             name: '',
-            nameError: '',
+            nameError: person.validateName(''),
             showNameError: false,
         };
     }
