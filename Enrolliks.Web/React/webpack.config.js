@@ -11,6 +11,7 @@ module.exports = {
 
     output: {
         filename: '[name].js',
+        // eslint-disable-next-line no-undef
         path: path.resolve(__dirname, '..', 'wwwroot', 'scripts'),
         clean: true,
     },
