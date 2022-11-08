@@ -41,7 +41,7 @@ class CreatePersonForm extends React.Component {
                         <ErrorLabel className='form-label form-label-error' htmlFor='name' showError={this.state.showNameError}>{this.state.nameError}</ErrorLabel>
                     </div>
                     <div>
-                        <button onClick={() => this.handleSubmitClick()}>Create</button>
+                        <button onClick={() => this.handleSubmitClick()} disabled={this.state.nameError.length > 0}>Create</button>
                         <button onClick={() => this.handleCancelClick()}>Cancel</button>
                     </div>
                 </div>
