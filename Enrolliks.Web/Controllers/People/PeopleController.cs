@@ -17,8 +17,8 @@ namespace Enrolliks.Web.Controllers.People
         public async Task<IActionResult> Index()
         {
             var peopleResult = await _manager.GetAllAsync();
-            var peopleDto = new GetAllPeopleResultModel(peopleResult);
-            return Page(peopleDto);
+            var peopleResultModel = new GetAllPeopleResultModel(peopleResult);
+            return Page(peopleResultModel);
         }
 
         [HttpPost("api/[controller]/create")]
