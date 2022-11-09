@@ -93,16 +93,40 @@ button:disabled {
 }
 
 .form-row {
+    display: grid;
     margin: 12px 0px;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: max-content max-content;
+    column-gap: 12px;
+    row-gap: 2px;
+    align-items: center;
+    justify-items: start;
 }
 
 .form-label {
-    margin: 0px 6px;
+    grid-row: 1;
+    grid-column: 1;
+    margin: 0px;
 }
 
 .form-input {
-    margin: 0px 6px;
+    grid-row: 1;
+    grid-column: 2;
+    margin: 0px;
     padding: 6px;
     border: 1px solid rgb(142, 184, 199);
     border-radius: 6px;
+}
+
+.form-error {
+    grid-row: 2;
+    grid-column: 2;
+    margin: 0px;
+    padding: 0px;
+    color: red;
+    font-size: 80%;
+}
+
+.form-error.hidden {
+    display: none;
 }

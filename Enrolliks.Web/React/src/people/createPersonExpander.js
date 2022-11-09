@@ -1,5 +1,4 @@
 const React = require('react');
-const ErrorLabel = require('../errorLabel');
 const person = require('./person');
 
 module.exports = class CreatePersonExpander extends React.Component {
@@ -32,13 +31,15 @@ class CreatePersonForm extends React.Component {
     }
 
     render() {
+        const hidden = this.state.showNameError && this.state.nameError.length > 0 ? '' : ' hidden';
+
         return (
             <form onSubmit={event => this.onSubmit(event)}>
                 <div className="panel">
                     <div className='form-row'>
                         <label className='form-label' htmlFor="name">Name</label>
                         <input className='form-input' type="text" id="name" name="name" value={this.state.name} onChange={event => this.handleNameChange(event)} />
-                        <ErrorLabel className='form-label form-label-error' htmlFor='name' showError={this.state.showNameError}>{this.state.nameError}</ErrorLabel>
+                        <label className={'form-error' + hidden} htmlFor='name'>{this.state.nameError}</label>
                     </div>
                     <div>
                         <button onClick={() => this.handleSubmitClick()} disabled={this.state.nameError.length > 0}>Create</button>
