@@ -79,6 +79,10 @@ button:hover {
     background-color: rgb(182, 236, 255);
 }
 
+button:disabled {
+    background-color: #b6ecff;
+}
+
 .panel {
     margin: 6px;
     padding: 6px;
