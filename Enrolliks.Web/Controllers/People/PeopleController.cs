@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Enrolliks.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,7 +32,7 @@ namespace Enrolliks.Web.Controllers.People
                 ICreatePersonResult.Conflict => Conflict(),
                 ICreatePersonResult.RepositoryFailure => StatusCode(500),
                 ICreatePersonResult.ValidationFailure(var errors) => BadRequest(errors),
-                _ => throw new ApplicationException("The switch cases were incomplete.")
+                _ => throw new SwitchFailureException()
             };
         }
 
@@ -46,7 +45,7 @@ namespace Enrolliks.Web.Controllers.People
                 IDeletePersonResult.NotFound => NotFound(),
                 IDeletePersonResult.RepositoryFailure => StatusCode(500),
                 IDeletePersonResult.Success => NoContent(),
-                _ => throw new ApplicationException("The switch cases were incomplete.")
+                _ => throw new SwitchFailureException()
             };
         }
     }
