@@ -1,3 +1,6 @@
+using AutoMapper;
+using Enrolliks.Web.Controllers;
+using Enrolliks.Web.Controllers.People;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +14,17 @@ namespace Enrolliks.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddAutoMapper(config =>
+            {
+                config.AddProfile<PeopleMappingProfile>();
+            });
+
+            builder.Services.AddControllersWithViews()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new DiscriminatedUnionConverterFactory());
+                    options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
+                });
 
             builder.Services.AddEntityFrameworkPersistence((provider, options) =>
             {
@@ -24,6 +37,10 @@ namespace Enrolliks.Web
             app.UseStaticFiles();
             app.UseRouting();
             app.MapDefaultControllerRoute();
+
+#if DEBUG
+            app.Services.GetRequiredService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
+#endif
 
             app.Run();
         }

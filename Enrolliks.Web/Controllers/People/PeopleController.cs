@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using AutoMapper;
 using Enrolliks.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,16 +8,18 @@ namespace Enrolliks.Web.Controllers.People
     public class PeopleController : PageController
     {
         private readonly IPeopleManager _manager;
+        private readonly IMapper _mapper;
 
-        public PeopleController(IPeopleManager manager)
+        public PeopleController(IPeopleManager manager, IMapper mapper)
         {
             _manager = manager;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index()
         {
             var peopleResult = await _manager.GetAllAsync();
-            var peopleResultModel = new GetAllPeopleResultModel(peopleResult);
+            var peopleResultModel = _mapper.Map<DiscriminatedUnionModel<IGetAllPeopleResult>>(peopleResult);
             return Page(peopleResultModel);
         }
 
@@ -31,7 +34,7 @@ namespace Enrolliks.Web.Controllers.People
                 ICreatePersonResult.Success(var createdPerson) => Ok(createdPerson),
                 ICreatePersonResult.Conflict => Conflict(),
                 ICreatePersonResult.RepositoryFailure => StatusCode(500),
-                ICreatePersonResult.ValidationFailure(var errors) => BadRequest(errors),
+                ICreatePersonResult.ValidationFailure(var errors) => BadRequest(_mapper.Map<PersonValidationErrorsModel>(errors)),
                 _ => throw new SwitchFailureException()
             };
         }
