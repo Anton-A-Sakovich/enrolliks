@@ -31,7 +31,7 @@ namespace Enrolliks.Web.Controllers.People
             var createResult = await _manager.CreateAsync(originalPerson);
             return createResult switch
             {
-                ICreatePersonResult.Success(var createdPerson) => Ok(createdPerson),
+                ICreatePersonResult.Success(var createdPerson) => Created(createdPerson.Name, createdPerson),
                 ICreatePersonResult.Conflict => Conflict(),
                 ICreatePersonResult.RepositoryFailure => StatusCode(500),
                 ICreatePersonResult.ValidationFailure(var errors) => BadRequest(_mapper.Map<PersonValidationErrorsModel>(errors)),
