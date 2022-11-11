@@ -3,18 +3,26 @@ const CreatePersonExpander = require('./createPersonExpander');
 const PersonRow = require('./personRow');
 
 const getAllPeopleResultType = {
-    success: 0,
-    failure: 1,
+    success: 'Success',
+    failure: 'RepositoryFailure',
 };
 
 module.exports = class PeoplePage extends React.Component {
     render() {
         const args = this.props.args;
-        const content = (args === null || !('type' in args) || args.type !== getAllPeopleResultType.success)
-            ? <ErrorMessage />
-            : args.people.length === 0
-                ? <NoPeopleMessage />
-                : <PeopleTable people={args.people} />;
+
+        let content = <p>Loading...</p>;
+        if (args === null || !('tag' in args) || args.tag !== getAllPeopleResultType.success) {
+            content = <p>Error.</p>;
+        } else {
+            const people = args.value.people;
+            if (people.length === 0) {
+                content = <p>No people found.</p>;
+            }
+            else {
+                content = <PeopleTable people={people} />;
+            }
+        }
 
         return (
             <div>
@@ -26,18 +34,6 @@ module.exports = class PeoplePage extends React.Component {
                 </div>
             </div>
         );
-    }
-}
-
-class NoPeopleMessage extends React.Component {
-    render() {
-        return <p>No people found.</p>;
-    }
-}
-
-class ErrorMessage extends React.Component {
-    render() {
-        return <p>Error.</p>;
     }
 }
 
