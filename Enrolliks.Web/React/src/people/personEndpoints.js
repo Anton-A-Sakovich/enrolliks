@@ -24,6 +24,12 @@ exports.createPerson = async (post, personToCreate) => {
         };
     }
 
+    if (response.status == 400) {
+        return {
+            tag: createPersonResultType.badRequest,
+        };
+    }
+
     if (response.status == 409) {
         return {
             tag: createPersonResultType.conflict,
