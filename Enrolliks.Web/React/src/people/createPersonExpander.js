@@ -1,6 +1,7 @@
 const React = require('react');
-const { createPerson, createPersonResultType } = require('./personEndpoints');
-const { validateName } = require('./personUtils');
+const createPersonLogic = require('./createPersonLogic');
+const { createPerson: createPersonEndpoint } = require('./personEndpoints');
+const { validateName: validatePersonName } = require('./personUtils');
 const axios = require('axios').default;
 
 module.exports = class CreatePersonExpander extends React.Component {
@@ -21,34 +22,40 @@ module.exports = class CreatePersonExpander extends React.Component {
     }
 }
 
+const post = (url, personToCreate) => axios({
+    url: url,
+    method: 'post',
+    data: personToCreate,
+    validateStatus: null,
+}).then(response => ({
+    status: response.status,
+    data: response.data,
+}));
+
+const endpoint = personToCreate => createPersonEndpoint(post, personToCreate);
+
 class CreatePersonForm extends React.Component {
     constructor(props) {
         super(props);
-
-        this.state = {
-            name: '',
-            nameError: validateName(''),
-            showNameError: false, // Even if the name error is not empty, it is not shown until the user starts typing.
-            requestInProgress: false,
-            requestStatus: '',
-        };
+        this.state = createPersonLogic.initialize(validatePersonName);
     }
 
     render() {
-        const errorLabelClass = this.state.showNameError && this.state.nameError.length > 0 ? '' : ' hidden';
-        const createButtonDisabled = this.isCreateButtonDisabled();
+        const errorLabelClass = this.state.showNameError && this.state.nameError.length > 0 ? 'form-error' : 'form-error hidden';
+        const createButtonDisabled = this.state.nameError.length > 0 || this.state.requestInProgress;
+        const nameInputDisabled = this.state.requestInProgress;
 
         return (
-            <form onSubmit={event => this.handleSubmit(event)}>
+            <form onSubmit={this.handleSubmit}>
                 <div className="panel">
                     <div className='form-row'>
                         <label className='form-label' htmlFor="name">Name</label>
-                        <input className='form-input' type="text" id="name" name="name" value={this.state.name} onChange={event => this.handleNameChange(event)} />
-                        <label className={'form-error' + errorLabelClass} htmlFor='name'>{this.state.nameError}</label>
+                        <input className='form-input' type="text" id="name" name="name" value={this.state.name} onChange={this.handleNameChange} disabled={nameInputDisabled} />
+                        <label className={errorLabelClass} htmlFor='name'>{this.state.nameError}</label>
                     </div>
                     <div>
-                        <button onClick={() => this.handleSubmitClick()} disabled={createButtonDisabled}>Create</button>
-                        <button onClick={() => this.handleCancelClick()}>Cancel</button>
+                        <button onClick={this.handleSubmitClick} disabled={createButtonDisabled}>Create</button>
+                        <button onClick={this.handleCancelClick}>Cancel</button>
                     </div>
                     <div>
                         {this.state.requestStatus}
@@ -58,81 +65,28 @@ class CreatePersonForm extends React.Component {
         );
     }
 
-    isCreateButtonDisabled() {
-        return this.state.nameError.length > 0 || this.state.requestInProgress;
-    }
-
-    handleSubmit(event) {
+    handleSubmit = event => {
         event.preventDefault();
         return false;
-    }
+    };
 
-    handleNameChange(event) {
-        const name = event.target.value;
-        const nameError = validateName(name);
-
-        this.setState({
-            name: name,
-            nameError: nameError,
-            showNameError: true,
-        });
+    handleNameChange = event => {
+        this.setState(createPersonLogic.setName(validatePersonName, event.target.value));
     }
 
     handleCancelClick() {
         this.props.onCancel();
     }
 
-    async handleSubmitClick() {
-        if (this.isCreateButtonDisabled())
-            return;
+    handleSubmitClick = async () => {
+        const [stateUpdateBeforeRequest, executeRequest] = createPersonLogic.create(endpoint, this.state);
+        
+        this.setState(stateUpdateBeforeRequest);
+        const stateUpdateAfterRequest = await executeRequest();
+        this.setState(stateUpdateAfterRequest);
 
-        const post = (url, data) => axios({
-            url: url,
-            method: 'post',
-            data: data,
-            validateStatus: null,
-        }).then(response => {
-            return {
-                status: response.status,
-                data: response.data,
-            };
-        });
-
-        this.setState({
-            requestStatus: 'Sending a request...',
-            requestInProgress: true,
-        });
-
-        let result;
-        try {
-            result = await createPerson(post, {
-                name: this.state.name,
-            });
-        } finally {
-            this.setState({
-                requestInProgress: false,
-            })
-        }
-
-        switch (result?.tag) {
-            case createPersonResultType.success:
-                this.props.onComplete();
-                break;
-            case createPersonResultType.conflict:
-                this.setState({requestStatus: 'The person with the name provided already exists.'});
-                break;
-            case createPersonResultType.validationFailure:
-                this.setState({requestStatus: 'The server returned validation error(s).'});
-                break;
-            case createPersonResultType.badRequest:
-                this.setState({requestStatus: 'Something went wrong when sending the request.'});
-                break;
-            case createPersonResultType.serverError:
-                this.setState({requestStatus: 'Something went wrong on the server.'});
-                break;
-            default:
-                this.setState({requestStatus: 'Something went wrong.'});
-                break;
+        if (stateUpdateAfterRequest.requestStatus === '') {
+            this.props.onComplete();
         }
     }
 }
