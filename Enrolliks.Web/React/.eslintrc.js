@@ -10,6 +10,11 @@ module.exports = {
         "plugin:react-hooks/recommended"
     ],
     "overrides": [
+        {
+            files: ['*.test.js'],
+            plugins: ['jest'],
+            extends: ['plugin:jest/recommended']
+        }
     ],
     "parserOptions": {
         "ecmaVersion": "latest"
