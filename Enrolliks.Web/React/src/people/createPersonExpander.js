@@ -74,7 +74,7 @@ class CreatePersonForm extends React.Component {
         this.setState(createPersonLogic.setName(validatePersonName, event.target.value));
     }
 
-    handleCancelClick() {
+    handleCancelClick = () => {
         this.props.onCancel();
     }
 
