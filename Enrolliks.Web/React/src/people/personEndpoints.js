@@ -17,17 +17,17 @@ exports.createPerson = async (post, personToCreate) => {
         };
     }
 
-    if (response.status == 400 && response.data) {
-        return {
-            tag: createPersonResultType.validationFailure,
-            validationErrors: response.data,
-        };
-    }
-
     if (response.status == 400) {
-        return {
-            tag: createPersonResultType.badRequest,
-        };
+        if (response.isHttpProblem) {
+            return {
+                tag: createPersonResultType.badRequest,
+            };
+        } else {
+            return {
+                tag: createPersonResultType.validationFailure,
+                validationErrors: response.data,
+            };
+        }
     }
 
     if (response.status == 409) {

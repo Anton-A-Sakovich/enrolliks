@@ -46,6 +46,7 @@ const post = (url, personToCreate) => axios({
 }).then(response => ({
     status: response.status,
     data: response.data,
+    isHttpProblem: response.headers['content-type'].startsWith('application/problem+json'),
 }));
 
 const endpoint = personToCreate => createPersonEndpoint(post, personToCreate);
