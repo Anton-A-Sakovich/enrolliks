@@ -16,9 +16,25 @@ module.exports = class CreatePersonExpander extends React.Component {
     render() {
         return this.state.editing
             ? <CreatePersonForm
-                onCancel={() => this.setState({editing: false})}
-                onComplete={() => this.setState({editing: false})} />
-            : <button onClick={() => this.setState({editing: true})}>Create</button>
+                onCancel={this.handleCreatePersonFormCancel}
+                onComplete={this.handleCreatePersonFormComplete} />
+            : <button onClick={this.handleCreateButtonClick}>Create</button>
+    }
+
+    handleCreateButtonClick = () => {
+        this.setState({
+            editing: true,
+        });
+    }
+
+    handleCreatePersonFormCancel = () => {
+        this.setState({
+            editing: false,
+        });
+    }
+
+    handleCreatePersonFormComplete = () => {
+        window.location.reload();
     }
 }
 
