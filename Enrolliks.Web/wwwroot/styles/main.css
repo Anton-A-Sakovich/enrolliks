@@ -130,3 +130,17 @@ button:disabled {
 .form-error.hidden {
     display: none;
 }
+
+button.remove-button {
+    margin: 0px;
+    padding: 0px;
+    background: none;
+    border: none;
+}
+
+button.remove-button > img {
+    height: 1.5em;
+    /* Other values of vertical-align leave extra space under the image.
+       I suspect this is the distance between the baseline and the bottom edge of the button. */
+    vertical-align: bottom;
+}
