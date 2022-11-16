@@ -56,7 +56,7 @@ const deletePersonResultType = exports.deletePersonResultType = {
 };
 
 exports.deletePerson = async (del, name) => {
-    const response = await del('/api/people/delete', name);
+    const response = await del(`/api/people/${name}`);
 
     switch (response.status) {
         case 204:

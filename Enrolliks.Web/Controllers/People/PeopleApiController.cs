@@ -33,8 +33,8 @@ namespace Enrolliks.Web.Controllers.People
             };
         }
 
-        [HttpDelete("api/people/delete")]
-        public async Task<IActionResult> Delete(string name)
+        [HttpDelete("api/people/{name}")]
+        public async Task<IActionResult> Delete([FromRoute]string name)
         {
             var deleteResult = await _manager.DeleteAsync(name);
             return deleteResult switch
