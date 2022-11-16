@@ -8,21 +8,31 @@ const getAllPeopleResultType = {
 };
 
 module.exports = class PeoplePage extends React.Component {
-    render() {
-        const args = this.props.args;
+    constructor(props) {
+        super(props);
 
-        let content = <p>Loading...</p>;
+        const args = this.props.args;
         if (args === null || !('tag' in args) || args.tag !== getAllPeopleResultType.success) {
-            content = <p>Error.</p>;
+            this.state = {
+                people: [],
+                isError: true,
+            };
         } else {
-            const people = args.value.people;
-            if (people.length === 0) {
-                content = <p>No people found.</p>;
-            }
-            else {
-                content = <PeopleTable people={people} />;
-            }
+            this.state = {
+                people: args.value.people,
+                isError: false,
+            };
         }
+    }
+
+    render() {
+        const content = this.state.isError
+            ? <p>Error.</p>
+            : this.state.people.length === 0
+                ? <p>No people found.</p>
+                : <PeopleTable
+                    people={this.state.people}
+                    onPersonRemoved={this.handlePersonRemoved} />;
 
         return (
             <div>
@@ -34,6 +44,17 @@ module.exports = class PeoplePage extends React.Component {
                 </div>
             </div>
         );
+    }
+
+    handlePersonRemoved = index => {
+        this.setState(previousState => {
+            const peopleCopy = previousState.people.slice();
+            peopleCopy.splice(index, 1)
+            
+            return {
+                people: peopleCopy,
+            };
+        });
     }
 }
 
@@ -47,7 +68,12 @@ class PeopleTable extends React.Component {
                     </tr>
                 </thead>
                 <tbody>
-                    {this.props.people.map(person => <PersonRow key={person.name} person={person} />)}
+                    {this.props.people.map((person, index) =>
+                        <PersonRow
+                            key={person.name}
+                            person={person}
+                            onRemoved={() => this.props.onPersonRemoved(index)} />
+                    )}
                 </tbody>
             </table>
         );
