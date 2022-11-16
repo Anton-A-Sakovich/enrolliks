@@ -132,7 +132,7 @@ button:disabled {
 }
 
 button.remove-button {
-    margin: 0px;
+    margin: 0px 6px;
     padding: 0px;
     background: none;
     border: none;
