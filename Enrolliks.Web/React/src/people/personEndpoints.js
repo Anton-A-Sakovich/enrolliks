@@ -46,3 +46,42 @@ exports.createPerson = async (post, personToCreate) => {
         tag: createPersonResultType.unknownError,
     };
 }
+
+const deletePersonResultType = exports.deletePersonResultType = {
+    success: 0,
+    notFound: 1,
+    badRequest: 2,
+    serverError: 3,
+    unknownError: 4,
+};
+
+exports.deletePerson = async (del, name) => {
+    const response = await del('/api/people/delete', name);
+
+    switch (response.status) {
+        case 204:
+            return {
+                tag: deletePersonResultType.success,
+            };
+        
+        case 404:
+            return {
+                tag: deletePersonResultType.notFound,
+            };
+
+        case 400:
+            return {
+                tag: deletePersonResultType.badRequest,
+            };
+
+        case 500:
+            return {
+                tag: deletePersonResultType.serverError,
+            };
+
+        default:
+            return {
+                tag: deletePersonResultType.unknownError,
+            };
+    }
+};
