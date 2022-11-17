@@ -7,7 +7,7 @@ using Enrolliks.Persistence.People;
 using Moq;
 using NUnit.Framework;
 
-namespace Enrolliks.Persistence.Tests
+namespace Enrolliks.Persistence.Tests.People
 {
     [TestFixture]
     public class PeopleManagerTests
@@ -90,7 +90,7 @@ namespace Enrolliks.Persistence.Tests
             {
                 int firstLetter = 'a';
                 int lettersCount = 'z' - 'a' + 1;
-                var chars = Enumerable.Range(0, length).Select(i => (char)(firstLetter + (i % lettersCount)));
+                var chars = Enumerable.Range(0, length).Select(i => (char)(firstLetter + i % lettersCount));
                 return string.Concat(chars);
             }
 
