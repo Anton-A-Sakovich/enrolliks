@@ -87,5 +87,20 @@ namespace Enrolliks.Persistence.Tests.Skills
 
             Assert.That(actual, Is.EqualTo(expected));
         }
+
+        [TestCase("ABC")]
+        [TestCase("abc")]
+        [TestCase("123")]
+        [TestCase(" .-")]
+        public void ReturnsNull(string name)
+        {
+            var skill = new Skill(Id: "1", name);
+            var validator = new SkillValidator();
+            SkillValidationErrors? expected = null;
+
+            var actual = validator.Validate(skill);
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
     }
 }

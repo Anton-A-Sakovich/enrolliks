@@ -2,6 +2,6 @@
 {
     public interface ISkillValidator
     {
-        SkillValidationErrors Validate(Skill skill);
+        SkillValidationErrors? Validate(Skill skill);
     }
 }

@@ -10,7 +10,7 @@ namespace Enrolliks.Persistence.Skills
 
         private static readonly Regex _disallowedLettersRegex = new(@"[^A-Za-z0-9\.\-\ ]", RegexOptions.Compiled);
 
-        public SkillValidationErrors Validate(Skill skill)
+        public SkillValidationErrors? Validate(Skill skill)
         {
             if (skill is null) throw new ArgumentNullException(nameof(skill));
 
@@ -27,10 +27,10 @@ namespace Enrolliks.Persistence.Skills
                 _ => null
             };
 
-            return new SkillValidationErrors
-            {
-                Name = nameError,
-            };
+            if (nameError is not null)
+                return new SkillValidationErrors { Name = nameError };
+
+            return null;
         }
     }
 }
