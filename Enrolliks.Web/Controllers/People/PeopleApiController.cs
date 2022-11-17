@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using AutoMapper;
-using Enrolliks.Persistence;
+using Enrolliks.Persistence.People;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Enrolliks.Web.Controllers.People

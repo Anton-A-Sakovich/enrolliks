@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Enrolliks.Persistence
+namespace Enrolliks.Persistence.People
 {
     internal class PeopleManager : IPeopleManager
     {

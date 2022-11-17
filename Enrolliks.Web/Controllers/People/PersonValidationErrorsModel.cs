@@ -1,4 +1,4 @@
-﻿using Enrolliks.Persistence;
+﻿using Enrolliks.Persistence.People;
 
 namespace Enrolliks.Web.Controllers.People
 {

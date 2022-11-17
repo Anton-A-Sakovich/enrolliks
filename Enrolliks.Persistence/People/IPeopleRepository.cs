@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Enrolliks.Persistence
+namespace Enrolliks.Persistence.People
 {
     public interface IPeopleRepository
     {

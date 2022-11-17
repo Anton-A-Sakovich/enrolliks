@@ -1,6 +1,6 @@
 ﻿using System;
-using Enrolliks.Persistence;
 using Enrolliks.Persistence.EntityFramework;
+using Enrolliks.Persistence.People;
 using Microsoft.EntityFrameworkCore;
 
 namespace Microsoft.Extensions.DependencyInjection

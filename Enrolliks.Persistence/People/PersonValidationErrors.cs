@@ -1,4 +1,4 @@
-﻿namespace Enrolliks.Persistence
+﻿namespace Enrolliks.Persistence.People
 {
     public record class PersonValidationErrors
     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Enrolliks.Persistence.People;
 using Microsoft.EntityFrameworkCore;
 
 namespace Enrolliks.Persistence.EntityFramework
