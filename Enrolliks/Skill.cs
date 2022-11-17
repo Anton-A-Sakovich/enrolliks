@@ -1,4 +1,4 @@
 ﻿namespace Enrolliks
 {
-   public record class Skill(string Name);
+   public record class Skill(string Id, string Name);
 }
