@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Enrolliks.Persistence.People
@@ -7,6 +8,8 @@ namespace Enrolliks.Persistence.People
     {
         private const int _minNameLength = 3;
         private const int _maxNameLength = 128;
+
+        private static readonly Regex _disallowedLetterRegex = new(@"[^A-Za-z\ ]", RegexOptions.Compiled);
 
         private readonly IPeopleRepository _repository;
 
@@ -133,12 +136,18 @@ namespace Enrolliks.Persistence.People
 
         private static PersonValidationErrors? Validate(Person person)
         {
-            INameValidationError? nameError = person.Name switch
+            IPersonNameValidationError? nameError = person.Name switch
             {
-                null => new INameValidationError.Empty(),
-                string s when string.IsNullOrWhiteSpace(s) => new INameValidationError.Empty(),
-                string s when s.Length < _minNameLength => new INameValidationError.TooShort(_minNameLength),
-                string s when s.Length > _maxNameLength => new INameValidationError.TooLong(_maxNameLength),
+                var s when string.IsNullOrWhiteSpace(s) => new IPersonNameValidationError.Empty(),
+
+                string s when s.Length < _minNameLength => new IPersonNameValidationError.TooShort(_minNameLength),
+                string s when s.Length > _maxNameLength => new IPersonNameValidationError.TooLong(_maxNameLength),
+
+                string s when char.IsWhiteSpace(s, 0) => new IPersonNameValidationError.StartsWithSpace(),
+
+                string s when _disallowedLetterRegex.Match(s) is Match { Success: true } match
+                    => new IPersonNameValidationError.DisallowedLetter(s.Substring(match.Index, match.Length)),
+
                 _ => null,
             };
 

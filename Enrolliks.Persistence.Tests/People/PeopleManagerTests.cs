@@ -105,7 +105,7 @@ namespace Enrolliks.Persistence.Tests.People
                 var actual = await managerMethod.Invoke(manager, person);
                 var expected = resultFactory.Invoke(new PersonValidationErrors
                 {
-                    Name = new INameValidationError.Empty()
+                    Name = new IPersonNameValidationError.Empty()
                 });
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -122,7 +122,7 @@ namespace Enrolliks.Persistence.Tests.People
                 var actual = await managerMethod.Invoke(manager, person);
                 var expected = resultFactory.Invoke(new PersonValidationErrors
                 {
-                    Name = new INameValidationError.TooShort(MinCharactersRequired: 3)
+                    Name = new IPersonNameValidationError.TooShort(MinCharactersRequired: 3)
                 });
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -139,7 +139,7 @@ namespace Enrolliks.Persistence.Tests.People
                 var actual = await managerMethod.Invoke(manager, person);
                 var expected = resultFactory.Invoke(new PersonValidationErrors
                 {
-                    Name = new INameValidationError.TooLong(MaxCharactersAllowed: 128)
+                    Name = new IPersonNameValidationError.TooLong(MaxCharactersAllowed: 128)
                 });
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -389,7 +389,7 @@ namespace Enrolliks.Persistence.Tests.People
             public void ReturnsRepositoryResult()
             {
                 var originalPerson = new Person("Joe");
-                var updatedPerson = new Person("Joe1");
+                var updatedPerson = new Person("Updated Joe");
 
                 var repositoryResults = new IUpdatePersonResult[]
                 {
@@ -413,7 +413,7 @@ namespace Enrolliks.Persistence.Tests.People
             [Test]
             public async Task DetectsMissingPersonManually()
             {
-                var originalPerson = new Person(Name: "Not found.");
+                var originalPerson = new Person(Name: "Not found");
 
                 var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
                 repository.Setup(r => r.UpdateAsync(originalPerson)).ThrowsAsync(new Exception());
@@ -434,7 +434,7 @@ namespace Enrolliks.Persistence.Tests.People
             [Test]
             public async Task DetectsConflictingPersonManually()
             {
-                var originalPerson = new Person(Name: "Not found.");
+                var originalPerson = new Person(Name: "Not found");
 
                 var repository = new Mock<IPeopleRepository>(MockBehavior.Strict);
                 repository.Setup(r => r.UpdateAsync(originalPerson)).ThrowsAsync(new Exception());
