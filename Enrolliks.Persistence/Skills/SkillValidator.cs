@@ -8,7 +8,7 @@ namespace Enrolliks.Persistence.Skills
         private const int _minCharactersRequired = 3;
         private const int _maxCharactersAllowed = 128;
 
-        private static readonly Regex _disallowedLettersRegex = new(@"[^A-Za-z0-9\.\-]", RegexOptions.Compiled);
+        private static readonly Regex _disallowedLettersRegex = new(@"[^A-Za-z0-9\.\-\ ]", RegexOptions.Compiled);
 
         public SkillValidationErrors Validate(Skill skill)
         {
