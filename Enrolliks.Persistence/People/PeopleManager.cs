@@ -1,28 +1,24 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Enrolliks.Persistence.People
 {
     internal class PeopleManager : IPeopleManager
     {
-        private const int _minNameLength = 3;
-        private const int _maxNameLength = 128;
-
-        private static readonly Regex _disallowedLetterRegex = new(@"[^A-Za-z\ ]", RegexOptions.Compiled);
-
         private readonly IPeopleRepository _repository;
+        private readonly IPersonValidator _validator;
 
-        public PeopleManager(IPeopleRepository repository)
+        public PeopleManager(IPeopleRepository repository, IPersonValidator validator)
         {
             _repository = repository;
+            _validator = validator;
         }
 
         public async Task<ICreatePersonResult> CreateAsync(Person person)
         {
             if (person is null) throw new ArgumentNullException(nameof(person));
 
-            if (Validate(person) is PersonValidationErrors validationErrors)
+            if (_validator.Validate(person) is PersonValidationErrors validationErrors)
                 return new ICreatePersonResult.ValidationFailure(validationErrors);
 
             Exception originalException;
@@ -107,7 +103,7 @@ namespace Enrolliks.Persistence.People
         {
             if (person is null) throw new ArgumentNullException(nameof(person));
 
-            if (Validate(person) is PersonValidationErrors validationErrors)
+            if (_validator.Validate(person) is PersonValidationErrors validationErrors)
                 return new IUpdatePersonResult.ValidationFailure(validationErrors);
 
             Exception originalException;
@@ -132,29 +128,6 @@ namespace Enrolliks.Persistence.People
             }
 
             return new IUpdatePersonResult.RepositoryFailure(originalException);
-        }
-
-        private static PersonValidationErrors? Validate(Person person)
-        {
-            IPersonNameValidationError? nameError = person.Name switch
-            {
-                var s when string.IsNullOrWhiteSpace(s) => new IPersonNameValidationError.Empty(),
-
-                string s when s.Length < _minNameLength => new IPersonNameValidationError.TooShort(_minNameLength),
-                string s when s.Length > _maxNameLength => new IPersonNameValidationError.TooLong(_maxNameLength),
-
-                string s when char.IsWhiteSpace(s, 0) => new IPersonNameValidationError.StartsWithSpace(),
-
-                string s when _disallowedLetterRegex.Match(s) is Match { Success: true } match
-                    => new IPersonNameValidationError.DisallowedLetter(s.Substring(match.Index, match.Length)),
-
-                _ => null,
-            };
-
-            if (nameError is not null)
-                return new PersonValidationErrors { Name = nameError };
-
-            return null;
         }
     }
 }
