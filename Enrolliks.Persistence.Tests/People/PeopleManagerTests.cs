@@ -198,7 +198,7 @@ namespace Enrolliks.Persistence.Tests.People
             }
 
             [Test]
-            public void ReturnsOriginalRepositoryFailureWhenExistsReturnsTrue()
+            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsTrue()
             {
                 string name = "Exception thrower";
                 var originalException = new Exception();
@@ -216,7 +216,7 @@ namespace Enrolliks.Persistence.Tests.People
             }
 
             [Test]
-            public void ReturnsOriginalRepositoryFailureWhenExistsReturnsFailure()
+            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsFailure()
             {
                 string name = "Exception thrower";
                 var originalException = new Exception();
@@ -234,7 +234,7 @@ namespace Enrolliks.Persistence.Tests.People
             }
 
             [Test]
-            public void ReturnsOriginalRepositoryFailureWhenExistsThrows()
+            public void ReturnsOriginalRepositoryExceptionWhenExistsThrows()
             {
                 string name = "Exception thrower";
                 var originalException = new Exception();
@@ -331,7 +331,7 @@ namespace Enrolliks.Persistence.Tests.People
             }
 
             [Test]
-            public void ReturnsOriginalRepositoryFailureWhenExistsReturnsFailure()
+            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsFailure()
             {
                 var personToUpdate = new Person(Name: "Maybe exists");
                 var originalException = new Exception();
@@ -350,7 +350,7 @@ namespace Enrolliks.Persistence.Tests.People
             }
 
             [Test]
-            public void ReturnsOriginalRepositoryFailureWhenExistsThrows()
+            public void ReturnsOriginalRepositoryExceptionWhenExistsThrows()
             {
                 var personToUpdate = new Person(Name: "Maybe exists");
                 var originalException = new Exception();
