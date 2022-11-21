@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Enrolliks.Persistence.Skills;
@@ -181,6 +182,105 @@ namespace Enrolliks.Persistence.Tests.Skills
                 builder.RepositoryBuilder.Throws(repository => repository.DeleteAsync(id), originalException);
                 builder.RepositoryBuilder.Setup(repository => existsSetupAction(repository.Setup(r => r.ExistsAsync(id))));
                 builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.EqualTo(new IDeleteSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+        }
+
+        [TestFixture]
+        public class GetAllTests
+        {
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(IGetManySkillsResult repositoryResult)
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Returns(repository => repository.GetAllAsync(), repositoryResult);
+                builder.AssertionsBuilder.Assert(manager => manager.GetAllAsync(), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetRepositoryResults()
+            {
+                yield return new object[] { new IGetManySkillsResult.RepositoryFailure(new Exception()) };
+                yield return new object[] { new IGetManySkillsResult.Success(new List<Skill>()) };
+            }
+
+            [Test]
+            public void ReturnsException()
+            {
+                var exception = new Exception();
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repositopry => repositopry.GetAllAsync(), exception);
+                builder.AssertionsBuilder.Assert(repository => repository.GetAllAsync(), Is.EqualTo(new IGetManySkillsResult.RepositoryFailure(exception)));
+                builder.Test();
+            }
+        }
+
+        [TestFixture]
+        public class GetOneTests
+        {
+            [Test]
+            public void ThrowsForNullId()
+            {
+                new SkillManagerTestBuilder().AssertionsBuilder.Assert(manager => manager.GetOneAsync(null!), Throws.TypeOf<ArgumentNullException>());
+            }
+
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(string id, IGetOneSkillResult repositoryResult)
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Returns(repository => repository.GetOneAsync(id), repositoryResult);
+                builder.AssertionsBuilder.Assert(repository => repository.GetOneAsync(id), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetRepositoryResults()
+            {
+                string id = "dot-net";
+
+                yield return new object[] { id, new IGetOneSkillResult.NotFound() };
+                yield return new object[] { id, new IGetOneSkillResult.RepositoryFailure(new Exception()) };
+                yield return new object[] { id, new IGetOneSkillResult.Success(new Skill(Id: id, Name: ".NET")) };
+            }
+
+            [Test]
+            public void DetectsMissingSkillManually()
+            {
+                string id = "dot-net";
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.GetOneAsync(id), new Exception());
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(id), new ISkillExistsResult.Success(Exists: false));
+                builder.AssertionsBuilder.Assert(manager => manager.GetOneAsync(id), Is.EqualTo(new IGetOneSkillResult.NotFound()));
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsReturnsTrue()
+            {
+                ReturnsOriginalExceptionWhen(repositoryExistsMethod => repositoryExistsMethod.ReturnsAsync(new ISkillExistsResult.Success(Exists: true)));
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsReturnsFailure()
+            {
+                ReturnsOriginalExceptionWhen(repositoryExistsMethod => repositoryExistsMethod.ReturnsAsync(new ISkillExistsResult.RepositoryFailure(new Exception())));
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsThrows()
+            {
+                ReturnsOriginalExceptionWhen(repositoryExistsMethod => repositoryExistsMethod.ThrowsAsync(new Exception()));
+            }
+
+            private static void ReturnsOriginalExceptionWhen(Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillExistsResult>>> existsSetupAction)
+            {
+                string id = "dot-net";
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.GetOneAsync(id), originalException);
+                builder.RepositoryBuilder.Setup(repository => existsSetupAction(repository.Setup(r => r.ExistsAsync(id))));
+                builder.AssertionsBuilder.Assert(manager => manager.GetOneAsync(id), Is.EqualTo(new IGetOneSkillResult.RepositoryFailure(originalException)));
                 builder.Test();
             }
         }

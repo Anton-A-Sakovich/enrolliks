@@ -11,5 +11,9 @@ namespace Enrolliks.Persistence.Skills
         Task<ISkillExistsResult> ExistsAsync(string id);
 
         Task<ISkillWithNameExistsResult> ExistsWithNameAsync(string name);
+
+        Task<IGetManySkillsResult> GetAllAsync();
+
+        Task<IGetOneSkillResult> GetOneAsync(string id);
     }
 }

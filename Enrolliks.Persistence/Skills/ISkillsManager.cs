@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Enrolliks.Persistence.Skills
@@ -8,6 +9,10 @@ namespace Enrolliks.Persistence.Skills
         Task<ICreateSkillResult> CreateAsync(Skill skill);
 
         Task<IDeleteSkillResult> DeleteAsync(string id);
+
+        Task<IGetManySkillsResult> GetAllAsync();
+
+        Task<IGetOneSkillResult> GetOneAsync(string id);
     }
 
     public interface ICreateSkillResult
@@ -42,5 +47,21 @@ namespace Enrolliks.Persistence.Skills
         public record class Success(bool Exists) : ISkillWithNameExistsResult;
 
         public record class RepositoryFailure(Exception Exception) : ISkillWithNameExistsResult;
+    }
+
+    public interface IGetManySkillsResult
+    {
+        public record class Success(IList<Skill> Skills) : IGetManySkillsResult;
+
+        public record class RepositoryFailure(Exception Exception) : IGetManySkillsResult;
+    }
+
+    public interface IGetOneSkillResult
+    {
+        public record class Success(Skill Skill) : IGetOneSkillResult;
+
+        public record class NotFound() : IGetOneSkillResult;
+
+        public record class RepositoryFailure(Exception Exception) : IGetOneSkillResult;
     }
 }

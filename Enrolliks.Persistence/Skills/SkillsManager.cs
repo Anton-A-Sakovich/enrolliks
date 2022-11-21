@@ -72,5 +72,45 @@ namespace Enrolliks.Persistence.Skills
 
             return new IDeleteSkillResult.RepositoryFailure(originalException);
         }
+
+        public async Task<IGetManySkillsResult> GetAllAsync()
+        {
+            try
+            {
+                return await _repository.GetAllAsync();
+            }
+            catch (Exception exception)
+            {
+                return new IGetManySkillsResult.RepositoryFailure(exception);
+            }
+        }
+
+        public async Task<IGetOneSkillResult> GetOneAsync(string id)
+        {
+            if (id is null) throw new ArgumentNullException(nameof(id));
+
+            Exception originalException;
+            try
+            {
+                return await _repository.GetOneAsync(id);
+            }
+            catch (Exception exception)
+            {
+                originalException = exception;
+            }
+
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(id);
+                if (existsResult is ISkillExistsResult.Success { Exists: false })
+                    return new IGetOneSkillResult.NotFound();
+            }
+            catch
+            {
+                // Use the original exception instead.
+            }
+
+            return new IGetOneSkillResult.RepositoryFailure(originalException);
+        }
     }
 }
