@@ -39,10 +39,38 @@ namespace Enrolliks.Persistence.Skills
             }
             catch
             {
-                // Just do nothing.
+                // Use the original exception instead.
             }
 
             return new ICreateSkillResult.RepositoryFailure(originalException);
+        }
+
+        public async Task<IDeleteSkillResult> DeleteAsync(string id)
+        {
+            if (id is null) throw new ArgumentNullException(nameof(id));
+
+            Exception originalException;
+            try
+            {
+                return await _repository.DeleteAsync(id);
+            }
+            catch (Exception exception)
+            {
+                originalException = exception;
+            }
+
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(id);
+                if (existsResult is ISkillExistsResult.Success { Exists: false })
+                    return new IDeleteSkillResult.NotFound();
+            }
+            catch
+            {
+                // Use the original exception instead.
+            }
+
+            return new IDeleteSkillResult.RepositoryFailure(originalException);
         }
     }
 }

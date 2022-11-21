@@ -121,5 +121,88 @@ namespace Enrolliks.Persistence.Tests.Skills
                 builder.Test();
             }
         }
+
+        [TestFixture]
+        public class Delete
+        {
+            [Test]
+            public void ThrowsForNullId()
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(null!), Throws.TypeOf<ArgumentNullException>());
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsRepositoryResult()
+            {
+                string id = "dot-net";
+                var repositoryResults = new IDeleteSkillResult[]
+                {
+                    new IDeleteSkillResult.Deleted(),
+                    new IDeleteSkillResult.NotFound(),
+                    new IDeleteSkillResult.RepositoryFailure(new Exception()),
+                };
+
+                foreach (var repositoryResult in repositoryResults)
+                {
+                    var builder = new SkillManagerTestBuilder();
+                    builder.RepositoryBuilder.Returns(repository => repository.DeleteAsync(id), repositoryResult);
+                    builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.SameAs(repositoryResult));
+                    builder.Test();
+                }
+            }
+
+            [Test]
+            public void DetectsMissingSkillManually()
+            {
+                string id = "dot-net";
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.DeleteAsync(id), new Exception());
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(id), new ISkillExistsResult.Success(Exists: false));
+                builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.EqualTo(new IDeleteSkillResult.NotFound()));
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsReturnsTrue()
+            {
+                string id = "dot-net";
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.DeleteAsync(id), originalException);
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(id), new ISkillExistsResult.Success(Exists: true));
+                builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.EqualTo(new IDeleteSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsReturnsFailure()
+            {
+                string id = "dot-net";
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.DeleteAsync(id), originalException);
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(id), new ISkillExistsResult.RepositoryFailure(new Exception()));
+                builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.EqualTo(new IDeleteSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsOriginalExceptionWhenExistsThrows()
+            {
+                string id = "dot-net";
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.RepositoryBuilder.Throws(repository => repository.DeleteAsync(id), originalException);
+                builder.RepositoryBuilder.Throws(repository => repository.ExistsAsync(id), new Exception());
+                builder.AssertionsBuilder.Assert(manager => manager.DeleteAsync(id), Is.EqualTo(new IDeleteSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+        }
     }
 }
