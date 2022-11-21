@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Enrolliks.Persistence.People;
 using NUnit.Framework;
 
@@ -18,30 +15,30 @@ namespace Enrolliks.Persistence.Tests.People
             Assert.That(() => validator.Validate(null!), Throws.TypeOf<ArgumentNullException>());
         }
 
-        [Test]
-        public void ReturnsNull()
+        private static void AssertPersonValidationErrors(Person person, PersonValidationErrors? expectedErrors)
         {
-            var validPerson = new Person("Max Caulfield");
-            AssertValidationErrors(validPerson, errors: null);
-        }
-
-        private static void AssertValidationErrors(Person person, PersonValidationErrors? errors)
-        {
-            Assert.That(new PersonValidator().Validate(person), Is.EqualTo(errors));
+            Assert.That(new PersonValidator().Validate(person), Is.EqualTo(expectedErrors));
         }
 
         [TestFixture]
         public class NameTests
         {
-            // This method is here to ensure that if any additional state is added to Person, all properties but the name will be valid.
-            private static Person BuildPerson(string name)
+            private static void AssertNameValidationError(string? name, IPersonNameValidationError? expectedNameError)
             {
-                return new Person(name);
+                var expectedPersonErrors = expectedNameError switch
+                {
+                    IPersonNameValidationError nameError => new PersonValidationErrors { Name = nameError },
+                    _ => null,
+                };
+
+                AssertPersonValidationErrors(new Person(Name: name!), expectedPersonErrors);
             }
 
-            private static void AssertNameValidationError<TError>(string name, TError error) where TError : IPersonNameValidationError
+            [TestCase("Max")]
+            [TestCase("Max Caulfield")]
+            public void ReturnsNull(string name)
             {
-                AssertValidationErrors(BuildPerson(name), new PersonValidationErrors { Name = error });
+                AssertNameValidationError(name, null);
             }
 
             [TestCase(new object[] { null! })]

@@ -15,92 +15,70 @@ namespace Enrolliks.Persistence.Tests.Skills
             Assert.That(() => validator.Validate(skill: null!), Throws.TypeOf<ArgumentNullException>());
         }
 
-        [TestCase((object)null!)]
-        [TestCase("")]
-        [TestCase(" ")]
-        [TestCase("  ")]
-        public void ReturnsEmptyResult(string? name)
+        private static void AssertSkillValidationErrors(Skill skill, SkillValidationErrors? expectedErrors)
         {
-            var skill = new Skill(Id: "1", name!);
-            var validator = new SkillValidator();
-            var expected = new SkillValidationErrors
+            Assert.That(new SkillValidator().Validate(skill), Is.EqualTo(expectedErrors));
+        }
+
+        [TestFixture]
+        public class NameTests
+        {
+            private static void AssertNameValidationError(string? name, ISkillNameValidationError? expectedNameError)
             {
-                Name = new ISkillNameValidationError.Empty(),
-            };
+                var expectedSkillErrors = expectedNameError switch
+                {
+                    ISkillNameValidationError nameError => new SkillValidationErrors { Name = nameError },
+                    _ => null,
+                };
 
-            var actual = validator.Validate(skill);
+                AssertSkillValidationErrors(new Skill(Id: "1", Name: name!), expectedSkillErrors);
+            }
 
-            Assert.That(actual, Is.EqualTo(expected));
-        }
-
-        [TestCase("a")]
-        [TestCase("ab")]
-        public void ReturnsTooShortResult(string name)
-        {
-            var skill = new Skill(Id: "1", name);
-            var validator = new SkillValidator();
-            var expected = new SkillValidationErrors
+            [TestCase("ABC")]
+            [TestCase("abc")]
+            [TestCase("123")]
+            [TestCase(" .-")]
+            public void ReturnsNull(string name)
             {
-                Name = new ISkillNameValidationError.TooShort(MinCharactersRequired: 3),
-            };
+                AssertNameValidationError(name, null);
+            }
 
-            var actual = validator.Validate(skill);
-
-            Assert.That(actual, Is.EqualTo(expected));
-        }
-
-        [TestCaseSource(nameof(GetLongNames))]
-        public void ReturnsTooLongResult(string name)
-        {
-            var skill = new Skill(Id: "1", name);
-            var validator = new SkillValidator();
-            var expected = new SkillValidationErrors
+            [TestCase((object)null!)]
+            [TestCase("")]
+            [TestCase(" ")]
+            [TestCase("  ")]
+            public void ReturnsEmptyResult(string? name)
             {
-                Name = new ISkillNameValidationError.TooLong(MaxCharactersAllowed: 128),
-            };
+                AssertNameValidationError(name, new ISkillNameValidationError.Empty());
+            }
 
-            var actual = validator.Validate(skill);
-
-            Assert.That(actual, Is.EqualTo(expected));
-        }
-
-        private static IEnumerable<object[]> GetLongNames()
-        {
-            yield return new object[] { StringGenerator.GenerateLongString(129) };
-            yield return new object[] { StringGenerator.GenerateLongString(130) };
-        }
-
-        [TestCase("Hello!", "!")]
-        [TestCase("/Hello", "/")]
-        [TestCase("[Hello]", "[")]
-        [TestCase("Hel*llo", "*")]
-        public void ReturnsDisallowedLetterResult(string name, string expectedOffendingLetter)
-        {
-            var skill = new Skill(Id: "1", name);
-            var validator = new SkillValidator();
-            var expected = new SkillValidationErrors
+            [TestCase("a")]
+            [TestCase("ab")]
+            public void ReturnsTooShortResult(string name)
             {
-                Name = new ISkillNameValidationError.DisallowedLetter(expectedOffendingLetter),
-            };
+                AssertNameValidationError(name, new ISkillNameValidationError.TooShort(MinCharactersRequired: 3));
+            }
 
-            var actual = validator.Validate(skill);
+            [TestCaseSource(nameof(GetLongNames))]
+            public void ReturnsTooLongResult(string name)
+            {
+                AssertNameValidationError(name, new ISkillNameValidationError.TooLong(MaxCharactersAllowed: 128));
+            }
 
-            Assert.That(actual, Is.EqualTo(expected));
-        }
+            private static IEnumerable<object[]> GetLongNames()
+            {
+                yield return new object[] { StringGenerator.GenerateLongString(129) };
+                yield return new object[] { StringGenerator.GenerateLongString(130) };
+            }
 
-        [TestCase("ABC")]
-        [TestCase("abc")]
-        [TestCase("123")]
-        [TestCase(" .-")]
-        public void ReturnsNull(string name)
-        {
-            var skill = new Skill(Id: "1", name);
-            var validator = new SkillValidator();
-            SkillValidationErrors? expected = null;
-
-            var actual = validator.Validate(skill);
-
-            Assert.That(actual, Is.EqualTo(expected));
+            [TestCase("Hello!", "!")]
+            [TestCase("/Hello", "/")]
+            [TestCase("[Hello]", "[")]
+            [TestCase("Hel*llo", "*")]
+            public void ReturnsDisallowedLetterResult(string name, string expectedOffendingLetter)
+            {
+                AssertNameValidationError(name, new ISkillNameValidationError.DisallowedLetter(expectedOffendingLetter));
+            }
         }
     }
 }
