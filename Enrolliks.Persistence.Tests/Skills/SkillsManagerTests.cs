@@ -112,7 +112,7 @@ namespace Enrolliks.Persistence.Tests.Skills
         }
 
         [TestFixture]
-        public class Delete
+        public class DeleteTests
         {
             [Test]
             public void ThrowsForNullId()
