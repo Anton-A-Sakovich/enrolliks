@@ -69,7 +69,7 @@ namespace Enrolliks.Persistence.Skills
 
     public interface IUpdateSkillResult
     {
-        public record class Success(Skill updatedSkill) : IUpdateSkillResult;
+        public record class Success(Skill UpdatedSkill) : IUpdateSkillResult;
 
         public record class ValidationFailure(SkillValidationErrors Errors) : IUpdateSkillResult;
 
