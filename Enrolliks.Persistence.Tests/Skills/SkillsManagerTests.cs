@@ -233,7 +233,9 @@ namespace Enrolliks.Persistence.Tests.Skills
             [Test]
             public void ThrowsForNullId()
             {
-                new SkillManagerTestBuilder().AssertionsBuilder.Assert(manager => manager.GetOneAsync(null!), Throws.TypeOf<ArgumentNullException>());
+                var builder = new SkillManagerTestBuilder();
+                builder.AssertionsBuilder.Assert(manager => manager.GetOneAsync(null!), Throws.TypeOf<ArgumentNullException>());
+                builder.Test();
             }
 
             [TestCaseSource(nameof(GetRepositoryResults))]
