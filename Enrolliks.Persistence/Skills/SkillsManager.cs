@@ -113,9 +113,69 @@ namespace Enrolliks.Persistence.Skills
             return new IGetOneSkillResult.RepositoryFailure(originalException);
         }
 
-        public Task<IUpdateSkillResult> UpdateAsync(Skill skill)
+        public async Task<IUpdateSkillResult> UpdateAsync(Skill skill)
         {
-            throw new NotImplementedException();
+            if (skill is null) throw new ArgumentNullException(nameof(skill));
+            if (skill.Id is null) throw new ArgumentException("Cannot update a skill without ID", nameof(skill));
+
+            if (_validator.Validate(skill) is SkillValidationErrors errors)
+                return new IUpdateSkillResult.ValidationFailure(errors);
+
+            Exception originalException;
+            try
+            {
+                return await _repository.UpdateAsync(skill);
+            }
+            catch (Exception exception)
+            {
+                originalException = exception;
+            }
+
+            bool existsFailed = true;
+            bool exists = false;
+            try
+            {
+                var existsResult = await _repository.ExistsAsync(skill.Id);
+                if (existsResult is ISkillExistsResult.Success success)
+                {
+                    existsFailed = false;
+                    exists = success.Exists;
+                }
+            }
+            catch
+            {
+                // Use the original exception instead.
+            }
+
+            if (existsFailed)
+                return new IUpdateSkillResult.RepositoryFailure(originalException);
+
+            if (!exists)
+                return new IUpdateSkillResult.NotFound();
+
+            bool existsWithNameFailed = true;
+            bool existsWithName = false;
+            try
+            {
+                var existsWithNameResult = await _repository.ExistsWithNameAsync(skill.Name);
+                if (existsWithNameResult is ISkillWithNameExistsResult.Success success)
+                {
+                    existsWithNameFailed = false;
+                    existsWithName = success.Exists;
+                }
+            }
+            catch
+            {
+                // Use the original exception instead.
+            }
+
+            if (existsWithNameFailed)
+                return new IUpdateSkillResult.RepositoryFailure(originalException);
+
+            if (existsWithName)
+                return new IUpdateSkillResult.Conflict();
+
+            return new IUpdateSkillResult.RepositoryFailure(originalException);
         }
     }
 }

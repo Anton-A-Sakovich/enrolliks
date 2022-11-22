@@ -311,6 +311,14 @@ namespace Enrolliks.Persistence.Tests.Skills
             }
 
             [Test]
+            public void ThrowsForSkillWithoutId()
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(new Skill(Id: null!, Name: ".NET")), Throws.TypeOf<ArgumentException>());
+                builder.Test();
+            }
+
+            [Test]
             public void ReturnsValidationErrors()
             {
                 var skill = new Skill(Id: "dot-net", Name: ".NET");
@@ -320,6 +328,109 @@ namespace Enrolliks.Persistence.Tests.Skills
                 builder.ValidatorBuilder.Setup(mock => mock.Setup(validator => validator.Validate(skill)).Returns(errors));
                 builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skill), Is.EqualTo(new IUpdateSkillResult.ValidationFailure(errors)));
                 builder.Test();
+            }
+
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(Skill skillToUpdate, IUpdateSkillResult repositoryResult)
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesSkill(skillToUpdate);
+                builder.RepositoryBuilder.Returns(repository => repository.UpdateAsync(skillToUpdate), repositoryResult);
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skillToUpdate), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetRepositoryResults()
+            {
+                var skillToUpdate = new Skill(Id: "dot-net", Name: "NET");
+                var updatedSkill = new Skill(Id: "dot-net", Name: ".NET");
+
+                yield return new object[] { skillToUpdate, new IUpdateSkillResult.Conflict() };
+                yield return new object[] { skillToUpdate, new IUpdateSkillResult.NotFound() };
+                yield return new object[] { skillToUpdate, new IUpdateSkillResult.RepositoryFailure(new Exception()) };
+                yield return new object[] { skillToUpdate, new IUpdateSkillResult.Success(updatedSkill) };
+            }
+
+            [Test]
+            public void DetectsMissingSkillManually()
+            {
+                var skillToUpdate = new Skill(Id: "dot-net", Name: "NET");
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesSkill(skillToUpdate);
+                builder.RepositoryBuilder.Throws(repository => repository.UpdateAsync(skillToUpdate), new Exception());
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(skillToUpdate.Id), new ISkillExistsResult.Success(Exists: false));
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skillToUpdate), Is.EqualTo(new IUpdateSkillResult.NotFound()));
+                builder.Test();
+            }
+
+            [Test]
+            public void DetectsConflictingSkillManually()
+            {
+                var skillToUpdate = new Skill(Id: "dot-net", Name: "NET");
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesSkill(skillToUpdate);
+                builder.RepositoryBuilder.Throws(repository => repository.UpdateAsync(skillToUpdate), new Exception());
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(skillToUpdate.Id), new ISkillExistsResult.Success(Exists: true));
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsWithNameAsync(skillToUpdate.Name), new ISkillWithNameExistsResult.Success(Exists: true));
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skillToUpdate), Is.EqualTo(new IUpdateSkillResult.Conflict()));
+                builder.Test();
+            }
+
+            [TestCaseSource(nameof(GetExistsResults))]
+            public void ReturnsOriginalExceptionWhenExists(Skill skillToUpdate, Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillExistsResult>>> existsSetupAction)
+            {
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesSkill(skillToUpdate);
+                builder.RepositoryBuilder.Throws(repository => repository.UpdateAsync(skillToUpdate), originalException);
+                builder.RepositoryBuilder.Setup(mock => existsSetupAction(mock.Setup(repository => repository.ExistsAsync(skillToUpdate.Id))));
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skillToUpdate), Is.EqualTo(new IUpdateSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetExistsResults()
+            {
+                var skillToUpdate = new Skill(Id: "dot-net", Name: "NET");
+
+                Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillExistsResult>>> existsSetupAction
+                    = existsMethod => existsMethod.ReturnsAsync(new ISkillExistsResult.RepositoryFailure(new Exception()));
+
+                yield return new object[] { skillToUpdate, existsSetupAction };
+
+                existsSetupAction = existsMethod => existsMethod.ThrowsAsync(new Exception());
+
+                yield return new object[] { skillToUpdate, existsSetupAction };
+            }
+
+            [TestCaseSource(nameof(GetExistsWithNameResults))]
+            public void ReturnsOriginalExceptionWhenExistsWithName(Skill skillToUpdate, Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillWithNameExistsResult>>> existsSetupAction)
+            {
+                var originalException = new Exception();
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesSkill(skillToUpdate);
+                builder.RepositoryBuilder.Throws(repository => repository.UpdateAsync(skillToUpdate), originalException);
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(skillToUpdate.Id), new ISkillExistsResult.Success(Exists: true));
+                builder.RepositoryBuilder.Setup(mock => existsSetupAction(mock.Setup(repository => repository.ExistsWithNameAsync(skillToUpdate.Name))));
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skillToUpdate), Is.EqualTo(new IUpdateSkillResult.RepositoryFailure(originalException)));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetExistsWithNameResults()
+            {
+                var skillToUpdate = new Skill(Id: "dot-net", Name: "NET");
+
+                Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillWithNameExistsResult>>> existsSetupAction
+                    = existsMethod => existsMethod.ReturnsAsync(new ISkillWithNameExistsResult.RepositoryFailure(new Exception()));
+
+                yield return new object[] { skillToUpdate, existsSetupAction };
+
+                existsSetupAction = existsMethod => existsMethod.ThrowsAsync(new Exception());
+
+                yield return new object[] { skillToUpdate, existsSetupAction };
             }
         }
     }
