@@ -15,5 +15,7 @@ namespace Enrolliks.Persistence.Skills
         Task<IGetManySkillsResult> GetAllAsync();
 
         Task<IGetOneSkillResult> GetOneAsync(string id);
+
+        Task<IUpdateSkillResult> UpdateAsync(Skill skill);
     }
 }

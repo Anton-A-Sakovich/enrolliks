@@ -13,6 +13,8 @@ namespace Enrolliks.Persistence.Skills
         Task<IGetManySkillsResult> GetAllAsync();
 
         Task<IGetOneSkillResult> GetOneAsync(string id);
+
+        Task<IUpdateSkillResult> UpdateAsync(Skill skill);
     }
 
     public interface ICreateSkillResult
@@ -63,5 +65,18 @@ namespace Enrolliks.Persistence.Skills
         public record class NotFound() : IGetOneSkillResult;
 
         public record class RepositoryFailure(Exception Exception) : IGetOneSkillResult;
+    }
+
+    public interface IUpdateSkillResult
+    {
+        public record class Success(Skill updatedSkill) : IUpdateSkillResult;
+
+        public record class ValidationFailure(SkillValidationErrors Errors) : IUpdateSkillResult;
+
+        public record class NotFound() : IUpdateSkillResult;
+
+        public record class Conflict() : IUpdateSkillResult;
+
+        public record class RepositoryFailure(Exception Exception) : IUpdateSkillResult;
     }
 }

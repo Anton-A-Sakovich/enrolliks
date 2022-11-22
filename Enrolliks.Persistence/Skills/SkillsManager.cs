@@ -112,5 +112,10 @@ namespace Enrolliks.Persistence.Skills
 
             return new IGetOneSkillResult.RepositoryFailure(originalException);
         }
+
+        public Task<IUpdateSkillResult> UpdateAsync(Skill skill)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

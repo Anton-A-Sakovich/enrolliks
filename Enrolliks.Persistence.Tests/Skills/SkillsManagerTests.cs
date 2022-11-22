@@ -298,5 +298,29 @@ namespace Enrolliks.Persistence.Tests.Skills
                 builder.Test();
             }
         }
+
+        [TestFixture]
+        public class UpdateTests
+        {
+            [Test]
+            public void ThrowsForNullSkill()
+            {
+                var builder = new SkillManagerTestBuilder();
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(null!), Throws.TypeOf<ArgumentNullException>());
+                builder.Test();
+            }
+
+            [Test]
+            public void ReturnsValidationErrors()
+            {
+                var skill = new Skill(Id: "dot-net", Name: ".NET");
+                var errors = new SkillValidationErrors { Name = new ISkillNameValidationError.Empty() };
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.Setup(mock => mock.Setup(validator => validator.Validate(skill)).Returns(errors));
+                builder.AssertionsBuilder.Assert(manager => manager.UpdateAsync(skill), Is.EqualTo(new IUpdateSkillResult.ValidationFailure(errors)));
+                builder.Test();
+            }
+        }
     }
 }
