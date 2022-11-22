@@ -45,6 +45,18 @@ namespace Enrolliks.Persistence.Tests.Skills
             }
 
             [Test]
+            public void ReturnsValidationErrors()
+            {
+                var skill = new Skill(Id: "dot-net", Name: ".NET");
+                var errors = new SkillValidationErrors { Name = new ISkillNameValidationError.Empty() };
+
+                var builder = new SkillManagerTestBuilder();
+                builder.ValidatorBuilder.Setup(mock => mock.Setup(validator => validator.Validate(skill)).Returns(errors));
+                builder.AssertionsBuilder.Assert(manager => manager.CreateAsync(skill), Is.EqualTo(new ICreateSkillResult.ValidationFailure(errors)));
+                builder.Test();
+            }
+
+            [Test]
             public void ReturnsRepositoryResult()
             {
                 var skillToCreate = new Skill(Id: "1", Name: ".NET");
