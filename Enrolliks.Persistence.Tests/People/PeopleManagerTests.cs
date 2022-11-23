@@ -362,8 +362,16 @@ namespace Enrolliks.Persistence.Tests.People
         [TestFixture]
         public class GetAllTests
         {
-            [Test]
-            public void ReturnsRepositoryResult()
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(IGetAllPeopleResult repositoryResult)
+            {
+                var builder = new PeopleManagerTestBuilder();
+                builder.RepositoryBuilder.Returns(repository => repository.GetAllAsync(), repositoryResult);
+                builder.AssertionsBuilder.Assert(async manager => await manager.GetAllAsync(), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            protected static IEnumerable<object[]> GetRepositoryResults()
             {
                 var repositoryResults = new IGetAllPeopleResult[]
                 {
@@ -371,16 +379,7 @@ namespace Enrolliks.Persistence.Tests.People
                     new IGetAllPeopleResult.Success(new List<Person>()),
                 };
 
-                Assert.Multiple(() =>
-                {
-                    foreach (var repositoryResult in repositoryResults)
-                    {
-                        var builder = new PeopleManagerTestBuilder();
-                        builder.RepositoryBuilder.Returns(repository => repository.GetAllAsync(), repositoryResult);
-                        builder.AssertionsBuilder.Assert(async manager => await manager.GetAllAsync(), Is.SameAs(repositoryResult));
-                        builder.Test();
-                    }
-                });
+                return repositoryResults.Select(result => new object[] { result });
             }
 
             [Test]
@@ -406,8 +405,16 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsRepositoryResult()
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(string name, IExistsPersonResult repositoryResult)
+            {
+                var builder = new PeopleManagerTestBuilder();
+                builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(name), repositoryResult);
+                builder.AssertionsBuilder.Assert(async manager => await manager.ExistsAsync(name), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            protected static IEnumerable<object[]> GetRepositoryResults()
             {
                 string name = "Joe";
                 var repositoryResults = new IExistsPersonResult[]
@@ -417,16 +424,7 @@ namespace Enrolliks.Persistence.Tests.People
                     new IExistsPersonResult.Success(Exists: false),
                 };
 
-                Assert.Multiple(() =>
-                {
-                    foreach (var repositoryResult in repositoryResults)
-                    {
-                        var builder = new PeopleManagerTestBuilder();
-                        builder.RepositoryBuilder.Returns(repository => repository.ExistsAsync(name), repositoryResult);
-                        builder.AssertionsBuilder.Assert(async manager => await manager.ExistsAsync(name), Is.SameAs(repositoryResult));
-                        builder.Test();
-                    }
-                });
+                return repositoryResults.Select(result => new object[] { name, result });
             }
 
             [Test]
