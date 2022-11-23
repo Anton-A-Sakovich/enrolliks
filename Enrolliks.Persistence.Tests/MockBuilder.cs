@@ -22,7 +22,15 @@ namespace Enrolliks.Persistence.Tests
             foreach (var setup in _setups)
                 setup(mock);
 
-            var verify = () => mock.VerifyAll();
+            var verify = () =>
+            {
+                mock.VerifyAll();
+
+                // We cannot rely on the exception thrown by the mock for calls without a setup to fail a test.
+                // The exception might be swallowed in the tested code, therefore we need to throw it outside of the tested code.
+                if (mockBehavior == MockBehavior.Strict)
+                    mock.VerifyNoOtherCalls();
+            };
 
             return (mock.Object, verify);
         }
