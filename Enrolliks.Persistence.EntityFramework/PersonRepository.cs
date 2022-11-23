@@ -60,11 +60,17 @@ namespace Enrolliks.Persistence.EntityFramework
             return new IExistsPersonResult.Success(exists);
         }
 
-        public async Task<IUpdatePersonResult> UpdateAsync(Person person)
+        public async Task<IUpdatePersonResult> UpdateAsync(string name, Person newPerson)
         {
-            _context.Update(person);
+            var existingPerson = await _context.People.FirstOrDefaultAsync(person => person.Name == name);
+            if (existingPerson is null)
+                return new IUpdatePersonResult.NotFound();
+
+            _context.Entry(existingPerson).Property(person => person.Name).CurrentValue = newPerson.Name;
+
+            _context.Update(existingPerson);
             await _context.SaveChangesAsync();
-            return new IUpdatePersonResult.Success(person);
+            return new IUpdatePersonResult.Success(existingPerson);
         }
     }
 }

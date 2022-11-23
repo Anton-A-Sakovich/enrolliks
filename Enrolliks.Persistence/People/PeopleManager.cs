@@ -99,35 +99,66 @@ namespace Enrolliks.Persistence.People
             }
         }
 
-        public async Task<IUpdatePersonResult> UpdateAsync(Person person)
+        public async Task<IUpdatePersonResult> UpdateAsync(string name, Person newPerson)
         {
-            if (person is null) throw new ArgumentNullException(nameof(person));
+            if (name is null) throw new ArgumentNullException(nameof(name));
+            if (newPerson is null) throw new ArgumentNullException(nameof(newPerson));
 
-            if (_validator.Validate(person) is PersonValidationErrors validationErrors)
+            if (_validator.Validate(newPerson) is PersonValidationErrors validationErrors)
                 return new IUpdatePersonResult.ValidationFailure(validationErrors);
 
             Exception originalException;
             try
             {
-                return await _repository.UpdateAsync(person);
+                return await _repository.UpdateAsync(name, newPerson);
             }
             catch (Exception exception)
             {
                 originalException = exception;
             }
 
+            (bool exists, bool existsFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsAsync(name),
+                result => result is IExistsPersonResult.Success success ? success.Exists : null);
+
+            if (existsFailed)
+                return new IUpdatePersonResult.RepositoryFailure(originalException);
+
+            if (!exists)
+                return new IUpdatePersonResult.NotFound();
+
+            (bool existsConflicting, bool existsConflictingFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsAsync(newPerson.Name),
+                result => result is IExistsPersonResult.Success success ? success.Exists : null);
+
+            if (existsConflictingFailed)
+                return new IUpdatePersonResult.RepositoryFailure(originalException);
+
+            if (existsConflicting)
+                return new IUpdatePersonResult.Conflict();
+
+            return new IUpdatePersonResult.RepositoryFailure(originalException);
+        }
+
+        private static async Task<(bool Exists, bool Failed)> TryCallExistsMethod<T>(Func<Task<T>> existsMethod, Func<T, bool?> converter)
+        {
+            bool existsFailed = true;
+            bool exists = false;
             try
             {
-                var existsResult = await _repository.ExistsAsync(person.Name);
-                if (existsResult is IExistsPersonResult.Success(bool exists))
-                    return exists ? new IUpdatePersonResult.Conflict() : new IUpdatePersonResult.NotFound();
+                var existsResult = await existsMethod();
+                if (converter(existsResult) is bool existsValue)
+                {
+                    existsFailed = false;
+                    exists = existsValue;
+                }
             }
             catch
             {
-                // Ignore the exists exception and return the original exception if not able to reliably detect a missing or conflicting person.
+                // Use the original exception instead.
             }
 
-            return new IUpdatePersonResult.RepositoryFailure(originalException);
+            return (exists, existsFailed);
         }
     }
 }

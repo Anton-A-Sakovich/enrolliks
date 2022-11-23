@@ -14,7 +14,7 @@ namespace Enrolliks.Persistence.People
 
         Task<IGetAllPeopleResult> GetAllAsync();
 
-        Task<IUpdatePersonResult> UpdateAsync(Person person);
+        Task<IUpdatePersonResult> UpdateAsync(string name, Person newPerson);
     }
 
     public interface ICreatePersonResult
