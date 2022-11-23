@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace Enrolliks.Persistence.Tests.Skills
 {
-    internal class SkillManagerTestBuilder
+    internal class SkillsManagerTestBuilder
     {
         public MockBuilder<ISkillsRepository> RepositoryBuilder { get; } = new();
         public MockBuilder<ISkillValidator> ValidatorBuilder { get; } = new();
