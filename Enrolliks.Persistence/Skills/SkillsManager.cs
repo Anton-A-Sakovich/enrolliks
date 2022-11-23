@@ -131,21 +131,9 @@ namespace Enrolliks.Persistence.Skills
                 originalException = exception;
             }
 
-            bool existsFailed = true;
-            bool exists = false;
-            try
-            {
-                var existsResult = await _repository.ExistsAsync(skill.Id);
-                if (existsResult is ISkillExistsResult.Success success)
-                {
-                    existsFailed = false;
-                    exists = success.Exists;
-                }
-            }
-            catch
-            {
-                // Use the original exception instead.
-            }
+            (bool exists, bool existsFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsAsync(skill.Id),
+                result => result is ISkillExistsResult.Success success ? success.Exists : null);
 
             if (existsFailed)
                 return new IUpdateSkillResult.RepositoryFailure(originalException);
@@ -153,21 +141,9 @@ namespace Enrolliks.Persistence.Skills
             if (!exists)
                 return new IUpdateSkillResult.NotFound();
 
-            bool existsWithNameFailed = true;
-            bool existsWithName = false;
-            try
-            {
-                var existsWithNameResult = await _repository.ExistsWithNameAsync(skill.Name);
-                if (existsWithNameResult is ISkillWithNameExistsResult.Success success)
-                {
-                    existsWithNameFailed = false;
-                    existsWithName = success.Exists;
-                }
-            }
-            catch
-            {
-                // Use the original exception instead.
-            }
+            (bool existsWithName, bool existsWithNameFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsWithNameAsync(skill.Name),
+                result => result is ISkillWithNameExistsResult.Success success ? success.Exists : null);
 
             if (existsWithNameFailed)
                 return new IUpdateSkillResult.RepositoryFailure(originalException);
@@ -176,6 +152,27 @@ namespace Enrolliks.Persistence.Skills
                 return new IUpdateSkillResult.Conflict();
 
             return new IUpdateSkillResult.RepositoryFailure(originalException);
+        }
+
+        private static async Task<(bool Exists, bool Failed)> TryCallExistsMethod<T>(Func<Task<T>> existsMethod, Func<T, bool?> converter)
+        {
+            bool existsFailed = true;
+            bool exists = false;
+            try
+            {
+                var existsResult = await existsMethod();
+                if (converter(existsResult) is bool existsValue)
+                {
+                    existsFailed = false;
+                    exists = existsValue;
+                }
+            }
+            catch
+            {
+                // Use the original exception instead.
+            }
+
+            return (exists, existsFailed);
         }
     }
 }
