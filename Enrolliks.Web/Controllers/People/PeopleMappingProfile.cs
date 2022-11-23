@@ -7,7 +7,7 @@ namespace Enrolliks.Web.Controllers.People
     {
         public PeopleMappingProfile()
         {
-            this.CreateDiscriminatedUnionMap<INameValidationError>();
+            this.CreateDiscriminatedUnionMap<IPersonNameValidationError>();
             this.CreateDiscriminatedUnionMap<IGetAllPeopleResult>();
             this.CreateDiscriminatedUnionMap<ICreatePersonResult>();
 

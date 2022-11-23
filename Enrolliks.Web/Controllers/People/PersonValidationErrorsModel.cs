@@ -4,6 +4,6 @@ namespace Enrolliks.Web.Controllers.People
 {
     public class PersonValidationErrorsModel
     {
-        public DiscriminatedUnionModel<INameValidationError>? Name { get; set; }
+        public DiscriminatedUnionModel<IPersonNameValidationError>? Name { get; set; }
     }
 }
