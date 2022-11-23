@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Enrolliks.Persistence.People;
@@ -44,8 +45,17 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsRepositoryResult()
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(Person person, ICreatePersonResult repositoryResult)
+            {
+                var builder = new PeopleManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesPerson(person);
+                builder.RepositoryBuilder.Returns(repository => repository.CreateAsync(person), repositoryResult);
+                builder.AssertionsBuilder.Assert(async manager => await manager.CreateAsync(person), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            private static IEnumerable<object[]> GetRepositoryResults()
             {
                 var person = new Person(Name: "Joe");
                 var repositoryResults = new ICreatePersonResult[]
@@ -55,19 +65,7 @@ namespace Enrolliks.Persistence.Tests.People
                     new ICreatePersonResult.Success(person),
                 };
 
-                Assert.Multiple(() =>
-                {
-                    foreach (var repositoryResult in repositoryResults)
-                    {
-                        var builder = new PeopleManagerTestBuilder();
-
-                        builder.ValidatorBuilder.ValidatesPerson(person);
-                        builder.RepositoryBuilder.Returns(repository => repository.CreateAsync(person), repositoryResult);
-                        builder.AssertionsBuilder.Assert(async manager => await manager.CreateAsync(person), Is.SameAs(repositoryResult));
-
-                        builder.Test();
-                    }
-                });
+                return repositoryResults.Select(result => new object[] { person, result });
             }
 
             [Test]
@@ -88,18 +86,19 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsFalse()
+            [TestCaseSource(nameof(GetExistsSetups))]
+            public void ReturnsOriginalRepositoryException(Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsSetup)
             {
-                var person = new Person(Name: "Already exists");
+                var person = new Person(Name: "Joe");
                 var originalException = new Exception();
+
                 var builder = new PeopleManagerTestBuilder();
 
                 builder.ValidatorBuilder.ValidatesPerson(person);
 
                 builder.RepositoryBuilder
                     .Throws(repository => repository.CreateAsync(person), originalException)
-                    .Returns(repository => repository.ExistsAsync(person.Name), new IExistsPersonResult.Success(Exists: false));
+                    .Setup(mock => existsSetup(mock.Setup(repository => repository.ExistsAsync(person.Name))));
 
                 builder.AssertionsBuilder
                     .Assert(async manager => await manager.CreateAsync(person), Is.EqualTo(new ICreatePersonResult.RepositoryFailure(originalException)));
@@ -107,42 +106,18 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsFailure()
+            private static IEnumerable<object[]> GetExistsSetups()
             {
-                var person = new Person(Name: "Maybe exists");
-                var originalException = new Exception();
-                var builder = new PeopleManagerTestBuilder();
+                Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsSetup;
 
-                builder.ValidatorBuilder.ValidatesPerson(person);
+                existsSetup = existsMethod => existsMethod.ReturnsAsync(new IExistsPersonResult.Success(Exists: false));
+                yield return new object[] { existsSetup };
 
-                builder.RepositoryBuilder
-                    .Throws(repository => repository.CreateAsync(person), originalException)
-                    .Returns(repository => repository.ExistsAsync(person.Name), new IExistsPersonResult.RepositoryFailure(new Exception()));
+                existsSetup = existsMethod => existsMethod.ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception()));
+                yield return new object[] { existsSetup };
 
-                builder.AssertionsBuilder
-                    .Assert(async manager => await manager.CreateAsync(person), Is.EqualTo(new ICreatePersonResult.RepositoryFailure(originalException)));
-
-                builder.Test();
-            }
-
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsThrows()
-            {
-                var person = new Person(Name: "Maybe exists");
-                var originalException = new Exception();
-                var builder = new PeopleManagerTestBuilder();
-
-                builder.ValidatorBuilder.ValidatesPerson(person);
-
-                builder.RepositoryBuilder
-                    .Throws(repository => repository.CreateAsync(person), originalException)
-                    .Throws(repository => repository.ExistsAsync(person.Name), new Exception());
-
-                builder.AssertionsBuilder
-                    .Assert(async manager => await manager.CreateAsync(person), Is.EqualTo(new ICreatePersonResult.RepositoryFailure(originalException)));
-
-                builder.Test();
+                existsSetup = existsMethod => existsMethod.ThrowsAsync(new Exception());
+                yield return new object[] { existsSetup };
             }
         }
 
@@ -157,8 +132,16 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsRepositoryResult()
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(string name, IDeletePersonResult repositoryResult)
+            {
+                var builder = new PeopleManagerTestBuilder();
+                builder.RepositoryBuilder.Returns(repository => repository.DeleteAsync(name), repositoryResult);
+                builder.AssertionsBuilder.Assert(async manager => await manager.DeleteAsync(name), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            protected static IEnumerable<object[]> GetRepositoryResults()
             {
                 string name = "Joe";
                 var repositoryResults = new IDeletePersonResult[]
@@ -168,16 +151,7 @@ namespace Enrolliks.Persistence.Tests.People
                     new IDeletePersonResult.Success(),
                 };
 
-                Assert.Multiple(async () =>
-                {
-                    foreach (var repositoryResult in repositoryResults)
-                    {
-                        var builder = new PeopleManagerTestBuilder();
-                        builder.RepositoryBuilder.Returns(repository => repository.DeleteAsync(name), repositoryResult);
-                        builder.AssertionsBuilder.Assert(async manager => await manager.DeleteAsync(name), Is.SameAs(repositoryResult));
-                        builder.Test();
-                    }
-                });
+                return repositoryResults.Select(result => new object[] { name, result });
             }
 
             [Test]
@@ -197,8 +171,8 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsTrue()
+            [TestCaseSource(nameof(GetExistsSetups))]
+            public void ReturnsOriginalRepositoryException(Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsSetup)
             {
                 string name = "Exception thrower";
                 var originalException = new Exception();
@@ -207,7 +181,7 @@ namespace Enrolliks.Persistence.Tests.People
 
                 builder.RepositoryBuilder
                     .Throws(repository => repository.DeleteAsync(name), originalException)
-                    .Returns(repository => repository.ExistsAsync(name), new IExistsPersonResult.Success(Exists: true));
+                    .Setup(mock => existsSetup(mock.Setup(repository => repository.ExistsAsync(name))));
 
                 builder.AssertionsBuilder
                     .Assert(async manager => await manager.DeleteAsync(name), Is.EqualTo(new IDeletePersonResult.RepositoryFailure(originalException)));
@@ -215,40 +189,18 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsReturnsFailure()
+            protected static IEnumerable<object[]> GetExistsSetups()
             {
-                string name = "Exception thrower";
-                var originalException = new Exception();
+                Action<Moq.Language.Flow.ISetup<IPeopleRepository, Task<IExistsPersonResult>>> existsSetup;
 
-                var builder = new PeopleManagerTestBuilder();
+                existsSetup = existsMethod => existsMethod.ReturnsAsync(new IExistsPersonResult.Success(Exists: true));
+                yield return new object[] { existsSetup };
 
-                builder.RepositoryBuilder
-                    .Throws(repository => repository.DeleteAsync(name), originalException)
-                    .Returns(repository => repository.ExistsAsync(name), new IExistsPersonResult.RepositoryFailure(new Exception()));
+                existsSetup = existsMethod => existsMethod.ReturnsAsync(new IExistsPersonResult.RepositoryFailure(new Exception()));
+                yield return new object[] { existsSetup };
 
-                builder.AssertionsBuilder
-                    .Assert(async manager => await manager.DeleteAsync(name), Is.EqualTo(new IDeletePersonResult.RepositoryFailure(originalException)));
-
-                builder.Test();
-            }
-
-            [Test]
-            public void ReturnsOriginalRepositoryExceptionWhenExistsThrows()
-            {
-                string name = "Exception thrower";
-                var originalException = new Exception();
-
-                var builder = new PeopleManagerTestBuilder();
-
-                builder.RepositoryBuilder
-                    .Throws(repository => repository.DeleteAsync(name), originalException)
-                    .Throws(repository => repository.ExistsAsync(name), new Exception());
-
-                builder.AssertionsBuilder
-                    .Assert(async manager => await manager.DeleteAsync(name), Is.EqualTo(new IDeletePersonResult.RepositoryFailure(originalException)));
-
-                builder.Test();
+                existsSetup = existsMethod => existsMethod.ThrowsAsync(new Exception());
+                yield return new object[] { existsSetup };
             }
         }
 
@@ -263,8 +215,17 @@ namespace Enrolliks.Persistence.Tests.People
                 builder.Test();
             }
 
-            [Test]
-            public void ReturnsRepositoryResult()
+            [TestCaseSource(nameof(GetRepositoryResults))]
+            public void ReturnsRepositoryResult(Person personToUpdate, IUpdatePersonResult repositoryResult)
+            {
+                var builder = new PeopleManagerTestBuilder();
+                builder.ValidatorBuilder.ValidatesPerson(personToUpdate);
+                builder.RepositoryBuilder.Returns(repository => repository.UpdateAsync(personToUpdate), repositoryResult);
+                builder.AssertionsBuilder.Assert(async manager => await manager.UpdateAsync(personToUpdate), Is.SameAs(repositoryResult));
+                builder.Test();
+            }
+
+            protected static IEnumerable<object[]> GetRepositoryResults()
             {
                 var personToUpdate = new Person("Joe");
                 var updatedPerson = new Person("Updated Joe");
@@ -277,19 +238,7 @@ namespace Enrolliks.Persistence.Tests.People
                     new IUpdatePersonResult.Success(updatedPerson),
                 };
 
-                Assert.Multiple(() =>
-                {
-                    foreach (var repositoryResult in repositoryResults)
-                    {
-                        var builder = new PeopleManagerTestBuilder();
-
-                        builder.ValidatorBuilder.ValidatesPerson(personToUpdate);
-                        builder.RepositoryBuilder.Returns(repository => repository.UpdateAsync(personToUpdate), repositoryResult);
-                        builder.AssertionsBuilder.Assert(async manager => await manager.UpdateAsync(personToUpdate), Is.SameAs(repositoryResult));
-
-                        builder.Test();
-                    }
-                });
+                return repositoryResults.Select(result => new object[] { personToUpdate, result });
             }
 
             [Test]
