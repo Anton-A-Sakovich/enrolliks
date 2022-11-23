@@ -31,16 +31,25 @@ namespace Enrolliks.Persistence.Skills
                 originalException = exception;
             }
 
-            try
-            {
-                var existsResult = await _repository.ExistsWithNameAsync(skill.Name);
-                if (existsResult is ISkillWithNameExistsResult.Success { Exists: true })
-                    return new ICreateSkillResult.Conflict();
-            }
-            catch
-            {
-                // Use the original exception instead.
-            }
+            (bool exists, bool existsFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsAsync(skill.Id),
+                result => result is ISkillExistsResult.Success success ? success.Exists : null);
+
+            if (existsFailed)
+                return new ICreateSkillResult.RepositoryFailure(originalException);
+
+            if (exists)
+                return new ICreateSkillResult.Conflict(nameof(Skill.Id));
+
+            (bool existsWithName, bool existsWithNameFailed) = await TryCallExistsMethod(
+                () => _repository.ExistsWithNameAsync(skill.Name),
+                result => result is ISkillWithNameExistsResult.Success success ? success.Exists : null);
+
+            if (existsWithNameFailed)
+                return new ICreateSkillResult.RepositoryFailure(originalException);
+
+            if (existsWithName)
+                return new ICreateSkillResult.Conflict(nameof(Skill.Name));
 
             return new ICreateSkillResult.RepositoryFailure(originalException);
         }

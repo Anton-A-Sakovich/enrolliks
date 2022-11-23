@@ -23,7 +23,7 @@ namespace Enrolliks.Persistence.Skills
 
         public record class ValidationFailure(SkillValidationErrors Errors) : ICreateSkillResult;
 
-        public record class Conflict() : ICreateSkillResult;
+        public record class Conflict(string PropertyName) : ICreateSkillResult;
 
         public record class RepositoryFailure(Exception Exception) : ICreateSkillResult;
     }
