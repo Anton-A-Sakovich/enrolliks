@@ -128,9 +128,6 @@ namespace Enrolliks.Persistence.Tests.Skills
             {
                 Action<Moq.Language.Flow.ISetup<ISkillsRepository, Task<ISkillExistsResult>>> existsSetupAction;
 
-                existsSetupAction = existsMethod => existsMethod.ReturnsAsync(new ISkillExistsResult.Success(Exists: false));
-                yield return new object[] { existsSetupAction };
-
                 existsSetupAction = existsMethod => existsMethod.ReturnsAsync(new ISkillExistsResult.RepositoryFailure(new Exception()));
                 yield return new object[] { existsSetupAction };
 
