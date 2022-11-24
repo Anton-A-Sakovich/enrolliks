@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Enrolliks.Persistence.EntityFramework.People;
+using Enrolliks.Persistence.EntityFramework.Skills;
+using Microsoft.EntityFrameworkCore;
 
 namespace Enrolliks.Persistence.EntityFramework
 {
     internal class EnrolliksContext : DbContext
     {
-        public DbSet<Person> People { get; set; } = null!;
+        public DbSet<PersonEntity> People { get; set; } = null!;
+
+        public DbSet<SkillEntity> Skills { get; set; } = null!;
 
         public EnrolliksContext(DbContextOptions<EnrolliksContext> options) : base(options)
         {
@@ -14,11 +18,8 @@ namespace Enrolliks.Persistence.EntityFramework
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Person>(entityBuilder =>
-            {
-                entityBuilder.HasKey(person => person.Name);
-                entityBuilder.Property(person => person.Name).IsRequired();
-            });
+            modelBuilder.Entity<PersonEntity>().Configure();
+            modelBuilder.Entity<SkillEntity>().Configure();
         }
     }
 }

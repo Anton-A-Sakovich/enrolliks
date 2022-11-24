@@ -1,38 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Enrolliks.Persistence.People;
 using Microsoft.EntityFrameworkCore;
 
-namespace Enrolliks.Persistence.EntityFramework
+namespace Enrolliks.Persistence.EntityFramework.People
 {
     internal class PeopleRepository : IPeopleRepository
     {
         private readonly EnrolliksContext _context;
+        private readonly IMapper _mapper;
 
-        public PeopleRepository(EnrolliksContext context)
+        public PeopleRepository(EnrolliksContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<ICreatePersonResult> CreateAsync(Person person)
+        public async Task<ICreatePersonResult> CreateAsync(Person personToCreate)
         {
-            _context.Add(person);
+            if (personToCreate is null) throw new ArgumentNullException(nameof(personToCreate));
+
+            var entity = _mapper.Map<Person, PersonEntity>(personToCreate);
+            _context.People.Add(entity);
             await _context.SaveChangesAsync();
-            return new ICreatePersonResult.Success(person);
+
+            var createdPerson = _mapper.Map<PersonEntity, Person>(entity);
+            return new ICreatePersonResult.Success(createdPerson);
         }
 
         public async Task<IDeletePersonResult> DeleteAsync(string name)
         {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
             var personExistsResult = await ExistsAsync(name);
             switch (personExistsResult)
             {
                 case IExistsPersonResult.Success(bool exists):
                     if (exists)
                     {
-                        var person = new Person(name);
-                        _context.Remove(person);
-
+                        var entity = new PersonEntity { Name = name };
+                        _context.People.Remove(entity);
                         await _context.SaveChangesAsync();
 
                         return new IDeletePersonResult.Success();
@@ -41,36 +49,40 @@ namespace Enrolliks.Persistence.EntityFramework
                     {
                         return new IDeletePersonResult.NotFound();
                     }
+
                 case IExistsPersonResult.RepositoryFailure(Exception exception):
                     return new IDeletePersonResult.RepositoryFailure(exception);
+
                 default:
-                    throw new ApplicationException("The switch cases were incomplete.");
+                    throw new SwitchFailureException();
             }
         }
 
         public async Task<IGetAllPeopleResult> GetAllAsync()
         {
-            var people = await _context.People.ToListAsync();
+            var people = await _mapper.ProjectTo<Person>(_context.People.AsNoTracking()).ToListAsync();
             return new IGetAllPeopleResult.Success(people);
         }
 
         public async Task<IExistsPersonResult> ExistsAsync(string name)
         {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
             bool exists = await _context.People.AnyAsync(person => person.Name == name);
             return new IExistsPersonResult.Success(exists);
         }
 
         public async Task<IUpdatePersonResult> UpdateAsync(string name, Person newPerson)
         {
-            var existingPerson = await _context.People.FirstOrDefaultAsync(person => person.Name == name);
-            if (existingPerson is null)
+            var entity = await _context.People.FirstOrDefaultAsync(person => person.Name == name);
+            if (entity is null)
                 return new IUpdatePersonResult.NotFound();
 
-            _context.Entry(existingPerson).Property(person => person.Name).CurrentValue = newPerson.Name;
-
-            _context.Update(existingPerson);
+            _ = _mapper.Map(newPerson, entity);
             await _context.SaveChangesAsync();
-            return new IUpdatePersonResult.Success(existingPerson);
+
+            var updatedPerson = _mapper.Map<PersonEntity, Person>(entity);
+            return new IUpdatePersonResult.Success(updatedPerson);
         }
     }
 }

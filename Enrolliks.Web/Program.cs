@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using AutoMapper;
 using Enrolliks.Web.Controllers;
 using Enrolliks.Web.Controllers.People;
@@ -14,10 +16,12 @@ namespace Enrolliks.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddAutoMapper(config =>
+            builder.Services.AddAutoMapper((services, config) =>
             {
+                config.AddProfiles(services.GetRequiredService<IEnumerable<Profile>>());
                 config.AddProfile<PeopleMappingProfile>();
-            });
+            },
+            Array.Empty<Type>());
 
             builder.Services.AddControllersWithViews()
                 .AddJsonOptions(options =>
