@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using AutoMapper;
 using Enrolliks.Web.Controllers;
 using Enrolliks.Web.Controllers.People;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +25,7 @@ namespace Enrolliks.Web
             },
             Array.Empty<Type>());
 
-            builder.Services.AddControllersWithViews()
+            builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new DiscriminatedUnionConverterFactory());
@@ -40,7 +42,15 @@ namespace Enrolliks.Web
 
             app.UseStaticFiles();
             app.UseRouting();
-            app.MapDefaultControllerRoute();
+            app.Use(async (HttpContext context, Func<Task> next) =>
+            {
+                if (context.GetEndpoint() is null)
+                    await Results.File("index.html", "text/html").ExecuteAsync(context);
+                else
+                    await next();
+            });
+
+            app.MapControllers();
 
 #if DEBUG
             app.Services.GetRequiredService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
