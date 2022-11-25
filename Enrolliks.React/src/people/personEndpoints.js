@@ -6,7 +6,7 @@ const getPeopleResultType = exports.getPeopleResultType = {
 };
 
 exports.getPeople = async (get) => {
-    const response = get('/api/people');
+    const response = await get('/api/people');
 
     if (response.status === 200) {
         return {
