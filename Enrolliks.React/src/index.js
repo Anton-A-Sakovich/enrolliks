@@ -7,7 +7,7 @@ const HomePageWrapper = React.lazy(() => import('./home/homePage'));
 const PeoplePageWrapper = React.lazy(() => import('./people/peoplePage'));
 const peoplePageLoader = () => import('./people/peopleLoader').then(({default: loader}) => loader());
 
-require('./main.css');
+require('./styles/main.css');
 
 function suspensed(element) {
     const fallback = <p>Loading...</p>;
