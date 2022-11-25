@@ -1,19 +1,18 @@
 ﻿const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     mode: 'development',
     devtool: 'inline-source-map',
 
-    entry: {
-        "home/index": './src/home/index.js',
-        "people/index": './src/people/index.js',
-    },
+    entry: './src/index.js',
 
     output: {
         filename: '[name].js',
         // eslint-disable-next-line no-undef
-        path: path.resolve(__dirname, '..', 'wwwroot', 'scripts'),
+        path: path.resolve(__dirname, '..', 'Enrolliks.Web', 'wwwroot'),
         clean: true,
+        publicPath: '/',
     },
 
     module: {
@@ -21,6 +20,10 @@ module.exports = {
             {
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.(?:jpe?g|png|gif|svg)/i,
+                type: 'asset/resource',
             },
             {
                 test: /\.jsx?$/i,
@@ -45,6 +48,12 @@ module.exports = {
             }
         ],
     },
+
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: 'Enrolliks',
+        }),
+    ],
 
     optimization: {
         splitChunks: {

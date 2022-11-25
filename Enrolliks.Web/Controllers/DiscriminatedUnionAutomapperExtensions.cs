@@ -1,8 +1,7 @@
 ﻿using System;
 using AutoMapper;
-using Enrolliks.Web.Controllers;
 
-namespace Enrolliks.Web
+namespace Enrolliks.Web.Controllers
 {
     public static class DiscriminatedUnionAutomapperExtensions
     {

@@ -4,6 +4,9 @@ const ImageButton = require('../imageButton');
 const logic = require('./personRowLogic');
 const { deletePerson: deletePersonEndpoint } = require('./personEndpoints');
 const axios = require('axios').default;
+const xmarkRegular = require('../images/circle-xmark-regular.svg');
+const xmarkSolid = require('../images/circle-xmark-solid.svg');
+const xmarkSolidGray = require('../images/circle-xmark-solid-gray.svg');
 
 module.exports = function PersonRow(props) {
     const [isConfirmationActive, setIsConfirmationActive] = useState(false);
@@ -27,9 +30,9 @@ function PersonInformation (props) {
             <ImageButton
                 className='remove-button'
                 onClick={props.onRemoveClicked}
-                src='/img/circle-xmark-regular.svg'
-                hoverSrc='/img/circle-xmark-solid.svg'
-                downSrc='/img/circle-xmark-solid-gray.svg' />
+                src={xmarkRegular}
+                hoverSrc={xmarkSolid}
+                downSrc={xmarkSolidGray} />
         </td>
     );
 }

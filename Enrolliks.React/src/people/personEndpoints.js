@@ -1,3 +1,37 @@
+const getPeopleResultType = exports.getPeopleResultType = {
+    success: 0,
+    badRequest: 1,
+    serverError: 2,
+    unknownError: 3,
+};
+
+exports.getPeople = async (get) => {
+    const response = await get('/api/people');
+
+    if (response.status === 200) {
+        return {
+            tag: getPeopleResultType.success,
+            people: response.data,
+        };
+    }
+
+    if ((response.status + "").startsWith("4")) {
+        return {
+            tag: getPeopleResultType.badRequest,
+        };
+    }
+
+    if ((response.status + "").startsWith("5")) {
+        return {
+            tag: getPeopleResultType.serverError,
+        };
+    }
+
+    return {
+        tag: getPeopleResultType.unknownError,
+    };
+};
+
 const createPersonResultType = exports.createPersonResultType = {
     success: 0,
     conflict: 1,
