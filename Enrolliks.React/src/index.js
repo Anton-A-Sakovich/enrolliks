@@ -5,8 +5,16 @@ const { createBrowserRouter, RouterProvider } = require('react-router-dom');
 const Root = require('./root');
 const HomePageWrapper = React.lazy(() => import('./home/homePage'));
 const PeoplePageWrapper = React.lazy(() => import('./people/peoplePage'));
+const peoplePageLoader = () => import('./people/peopleLoader').then(({default: loader}) => loader());
 
 require('./main.css');
+
+function suspensed(element) {
+    const fallback = <p>Loading...</p>;
+    return (<React.Suspense fallback={fallback}>
+        {element}
+    </React.Suspense>);
+}
 
 const router = createBrowserRouter([
     {
@@ -15,21 +23,16 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: (<React.Suspense fallback={<p>Loading...</p>}>
-                    <HomePageWrapper />
-                </React.Suspense>),
+                element: suspensed(<HomePageWrapper />),
             },
             {
                 path: 'home',
-                element: (<React.Suspense fallback={<p>Loading...</p>}>
-                    <HomePageWrapper />
-                </React.Suspense>),
+                element: suspensed(<HomePageWrapper />),
             },
             {
                 path: 'people',
-                element: (<React.Suspense fallback={<p>Loading...</p>}>
-                    <PeoplePageWrapper />
-                </React.Suspense>),
+                loader: peoplePageLoader,
+                element: suspensed(<PeoplePageWrapper />),
             },
         ],
     },
