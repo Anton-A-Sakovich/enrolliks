@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Enrolliks.Web.Controllers.People
 {
     [ApiController]
+    [ProducesErrorResponseType(typeof(void))]
     public class PeopleController : ControllerBase
     {
         private readonly IPeopleManager _manager;
@@ -19,6 +20,8 @@ namespace Enrolliks.Web.Controllers.People
         }
 
         [HttpGet("api/people")]
+        [ProducesResponseType(typeof(IList<Person>), 200, "application/json")]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetAllAsync()
         {
             var peopleResult = await _manager.GetAllAsync();
@@ -31,6 +34,10 @@ namespace Enrolliks.Web.Controllers.People
         }
 
         [HttpPost("api/people/create")]
+        [ProducesResponseType(typeof(Person), 201, "application/json")]
+        [ProducesResponseType(typeof(PersonValidationErrorsModel), 400, "application/json")]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> Create(CreatePersonModel personModel)
         {
             var originalPerson = new Person(Name: personModel.Name);
@@ -48,6 +55,9 @@ namespace Enrolliks.Web.Controllers.People
         }
 
         [HttpDelete("api/people/{name}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> Delete([FromRoute]string name)
         {
             var deleteResult = await _manager.DeleteAsync(name);
