@@ -1,41 +1,25 @@
+const { useState } = require('react');
 const React = require('react');
+const { useNavigate } = require('react-router-dom');
 const createPersonLogic = require('./createPersonLogic');
 const { createPerson: createPersonEndpoint } = require('./personEndpoints');
 const { validateName: validatePersonName } = require('./personUtils');
 const axios = require('axios').default;
 
-module.exports = class CreatePersonExpander extends React.Component {
-    constructor(props) {
-        super(props);
+module.exports = function CreatePersonExpander() {
+    const navigate = useNavigate();
+    const [editing, setEditing] = useState(false);
 
-        this.state = {
-            editing: false,
-        };
-    }
+    const handleCreateClick = () => setEditing(true);
+    const handleFormCancel = () => setEditing(false);
+    const handleFormComplete = () => {
+        setEditing(false);
+        navigate('');
+    };
 
-    render() {
-        return this.state.editing
-            ? <CreatePersonForm
-                onCancel={this.handleCreatePersonFormCancel}
-                onComplete={this.handleCreatePersonFormComplete} />
-            : <button onClick={this.handleCreateButtonClick}>Create</button>
-    }
-
-    handleCreateButtonClick = () => {
-        this.setState({
-            editing: true,
-        });
-    }
-
-    handleCreatePersonFormCancel = () => {
-        this.setState({
-            editing: false,
-        });
-    }
-
-    handleCreatePersonFormComplete = () => {
-        window.location.reload();
-    }
+    return editing
+        ? <CreatePersonForm onCancel={handleFormCancel} onComplete={handleFormComplete} />
+        : <button onClick={handleCreateClick}>Create</button>
 }
 
 const post = (url, personToCreate) => axios({
