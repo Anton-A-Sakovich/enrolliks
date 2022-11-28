@@ -4,6 +4,7 @@ using AutoMapper;
 using Enrolliks.Persistence.Skills;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.StatusCodes;
+using static System.Net.Mime.MediaTypeNames.Application;
 
 namespace Enrolliks.Web.Controllers.Skills
 {
@@ -21,9 +22,9 @@ namespace Enrolliks.Web.Controllers.Skills
         }
 
         [HttpPost("api/[controller]/create")]
-        [ProducesResponseType(typeof(Skill), Status201Created)]
-        [ProducesResponseType(typeof(SkillValidationErrorsModel), Status400BadRequest)]
-        [ProducesResponseType(typeof(CreateSkillConflictModel), Status409Conflict)]
+        [ProducesResponseType(typeof(Skill), Status201Created, Json)]
+        [ProducesResponseType(typeof(SkillValidationErrorsModel), Status400BadRequest, Json)]
+        [ProducesResponseType(typeof(CreateSkillConflictModel), Status409Conflict, Json)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> Create(CreateSkillModel createSkillModel)
         {
@@ -64,7 +65,7 @@ namespace Enrolliks.Web.Controllers.Skills
         }
 
         [HttpGet("api/[controller]")]
-        [ProducesResponseType(typeof(IList<Skill>), Status200OK)]
+        [ProducesResponseType(typeof(IList<Skill>), Status200OK, Json)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
@@ -78,7 +79,7 @@ namespace Enrolliks.Web.Controllers.Skills
         }
 
         [HttpGet("api/[controller]/{id}")]
-        [ProducesResponseType(typeof(Skill), Status200OK)]
+        [ProducesResponseType(typeof(Skill), Status200OK, Json)]
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> GetOne(string id)
@@ -94,8 +95,8 @@ namespace Enrolliks.Web.Controllers.Skills
         }
 
         [HttpPut("api/[controller]/{id}")]
-        [ProducesResponseType(typeof(Skill), Status200OK)]
-        [ProducesResponseType(typeof(SkillValidationErrorsModel), Status400BadRequest)]
+        [ProducesResponseType(typeof(Skill), Status200OK, Json)]
+        [ProducesResponseType(typeof(SkillValidationErrorsModel), Status400BadRequest, Json)]
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status409Conflict)]
         [ProducesResponseType(Status500InternalServerError)]
