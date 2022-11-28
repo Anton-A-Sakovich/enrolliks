@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Enrolliks.Web.Controllers;
 using Enrolliks.Web.Controllers.People;
+using Enrolliks.Web.Controllers.Skills;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,7 @@ namespace Enrolliks.Web
             {
                 config.AddProfiles(services.GetRequiredService<IEnumerable<Profile>>());
                 config.AddProfile<PeopleMappingProfile>();
+                config.AddProfile<SkillsMappingProfile>();
             },
             Array.Empty<Type>());
 
