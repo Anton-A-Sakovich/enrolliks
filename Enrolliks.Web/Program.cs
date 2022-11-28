@@ -35,6 +35,11 @@ namespace Enrolliks.Web
             },
             Array.Empty<Type>());
 
+            builder.Services.AddRouting(options =>
+            {
+                options.LowercaseUrls = true;
+            });
+
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
