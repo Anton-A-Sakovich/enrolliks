@@ -1,7 +1,10 @@
-﻿namespace Enrolliks.Web.Controllers.People
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Enrolliks.Web.Controllers.People
 {
     public class CreatePersonModel
     {
-        public string Name { get; set; } = null!;
+        [Required]
+        public required string Name { get; init; }
     }
 }

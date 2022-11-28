@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Enrolliks.Persistence.People;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.AspNetCore.Http.StatusCodes;
+using static System.Net.Mime.MediaTypeNames.Application;
 
 namespace Enrolliks.Web.Controllers.People
 {
@@ -19,54 +21,56 @@ namespace Enrolliks.Web.Controllers.People
             _mapper = mapper;
         }
 
-        [HttpGet("api/people")]
-        [ProducesResponseType(typeof(IList<Person>), 200, "application/json")]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> GetAllAsync()
+        [HttpPost("api/[controller]/create")]
+        [ProducesResponseType(typeof(Person), Status201Created, Json)]
+        [ProducesResponseType(typeof(PersonValidationErrorsModel), Status400BadRequest, Json)]
+        [ProducesResponseType(Status409Conflict)]
+        [ProducesResponseType(Status500InternalServerError)]
+        public async Task<IActionResult> Create(CreatePersonModel createPersonModel)
         {
-            var peopleResult = await _manager.GetAllAsync();
-            return peopleResult switch
-            {
-                IGetAllPeopleResult.Success(IList<Person> people) => Ok(people),
-                IGetAllPeopleResult.RepositoryFailure => StatusCode(500),
-                _ => throw new SwitchFailureException(),
-            };
-        }
-
-        [HttpPost("api/people/create")]
-        [ProducesResponseType(typeof(Person), 201, "application/json")]
-        [ProducesResponseType(typeof(PersonValidationErrorsModel), 400, "application/json")]
-        [ProducesResponseType(409)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> Create(CreatePersonModel personModel)
-        {
-            var originalPerson = new Person(Name: personModel.Name);
-
-            var createResult = await _manager.CreateAsync(originalPerson);
+            var personToCreate = _mapper.Map<CreatePersonModel, Person>(createPersonModel);
+            var createResult = await _manager.CreateAsync(personToCreate);
             return createResult switch
             {
-                ICreatePersonResult.Success(var createdPerson)
-                    => Created(Url.ActionLink(action: nameof(Delete), values: new { name = createdPerson.Name }) ?? "", createdPerson),
-                ICreatePersonResult.Conflict => Conflict(),
-                ICreatePersonResult.RepositoryFailure => StatusCode(500),
-                ICreatePersonResult.ValidationFailure(var errors) => BadRequest(_mapper.Map<PersonValidationErrorsModel>(errors)),
+                ICreatePersonResult.Success(var createdPerson) => Created(
+                    Url.Action(action: nameof(Delete), values: new { name = createdPerson.Name }) ?? createdPerson.Name, createdPerson),
+
+                ICreatePersonResult.ValidationFailure(var errors) => BadRequest(
+                    _mapper.Map<PersonValidationErrors, PersonValidationErrorsModel>(errors)),
+
+                ICreatePersonResult.Conflict => Conflict((object?)null),
+                ICreatePersonResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException()
             };
         }
 
-        [HttpDelete("api/people/{name}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> Delete([FromRoute]string name)
+        [HttpDelete("api/[controller]/{name}")]
+        [ProducesResponseType(Status204NoContent)]
+        [ProducesResponseType(Status404NotFound)]
+        [ProducesResponseType(Status500InternalServerError)]
+        public async Task<IActionResult> Delete([FromRoute] string name)
         {
             var deleteResult = await _manager.DeleteAsync(name);
             return deleteResult switch
             {
-                IDeletePersonResult.NotFound => NotFound(),
-                IDeletePersonResult.RepositoryFailure => StatusCode(500),
                 IDeletePersonResult.Success => NoContent(),
+                IDeletePersonResult.NotFound => NotFound(null),
+                IDeletePersonResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException()
+            };
+        }
+
+        [HttpGet("api/[controller]")]
+        [ProducesResponseType(typeof(IList<Person>), Status200OK, Json)]
+        [ProducesResponseType(Status500InternalServerError)]
+        public async Task<IActionResult> GetAllAsync()
+        {
+            var getAllResult = await _manager.GetAllAsync();
+            return getAllResult switch
+            {
+                IGetAllPeopleResult.Success(IList<Person> people) => Ok(people),
+                IGetAllPeopleResult.RepositoryFailure => StatusCode(Status500InternalServerError),
+                _ => throw new SwitchFailureException(),
             };
         }
     }
