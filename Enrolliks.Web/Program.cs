@@ -86,10 +86,14 @@ namespace Enrolliks.Web
                     await next();
             });
 
+            // This way everyone clearly sees where the endpoints middleware is relative to the rest of the pipeline, no magic.
+#pragma warning disable ASP0014 // Suggest using top level route registrations
             app.UseEndpoints(builder =>
             {
                 builder.MapControllers();
+                builder.Map("/api/{**rest}", (string? rest) => Results.NotFound($"/{rest}"));
             });
+#pragma warning restore ASP0014 // Suggest using top level route registrations
 
             if (app.Environment.IsDevelopment())
             {
