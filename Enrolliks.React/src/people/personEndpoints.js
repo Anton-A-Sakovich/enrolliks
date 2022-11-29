@@ -44,24 +44,24 @@ const createPersonResultType = exports.createPersonResultType = {
 exports.createPerson = async (post, personToCreate) => {
     const response = await post('/api/people/create', personToCreate);
 
-    if (response.status == 201) {
+    if (response.status === 201) {
         return {
             tag: createPersonResultType.success,
             createdPerson: response.data,
         };
     }
 
-    if (response.status == 400) {
-        if (response.isHttpProblem) {
-            return {
-                tag: createPersonResultType.badRequest,
-            };
-        } else {
-            return {
-                tag: createPersonResultType.validationFailure,
-                validationErrors: response.data,
-            };
-        }
+    if (response.status === 400) {
+        return {
+            tag: createPersonResultType.validationFailure,
+            validationErrors: response.data,
+        };
+    }
+
+    if (response.status === 404 && typeof (response.data) === 'string') {
+        return {
+            tag: createPersonResultType.badRequest,
+        };
     }
 
     if (response.status == 409) {
@@ -90,7 +90,7 @@ const deletePersonResultType = exports.deletePersonResultType = {
 };
 
 exports.deletePerson = async (del, name) => {
-    const response = await del(`/api/people/${name}`);
+    const response = await del(`/api/people/${encodeURIComponent(name)}`);
 
     switch (response.status) {
         case 204:
