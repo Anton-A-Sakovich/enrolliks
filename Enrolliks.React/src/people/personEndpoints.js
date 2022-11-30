@@ -1,4 +1,4 @@
-const { isArray, isObject, repeated } = require('../patterns');
+const { isArray, isObject, repeated, and } = require('../predicates');
 const { isPerson } = require('./personUtils');
 
 function convertRemainingStatuses(status, resultTypes) {
@@ -29,7 +29,7 @@ const getPeopleResultType = exports.getPeopleResultType = {
 exports.getPeople = async (get) => {
     const response = await get('/api/people');
 
-    if (response.status === 200 && isArray(repeated(isPerson, 0))(response.data)) {
+    if (response.status === 200 && and(isArray, repeated(isPerson, 0))(response.data)) {
         return {
             tag: getPeopleResultType.success,
             people: response.data,
@@ -58,7 +58,7 @@ exports.createPerson = async (post, personToCreate) => {
         };
     }
 
-    if (response.status === 400 && isObject()(response.data)) {
+    if (response.status === 400 && isObject(response.data)) {
         return {
             tag: createPersonResultType.validationFailure,
             validationErrors: response.data,

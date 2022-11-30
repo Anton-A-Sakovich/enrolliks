@@ -27,6 +27,16 @@ function isString(value) {
     return typeof(value) === 'string';
 }
 
+module.exports.isObject = isObject;
+function isObject(value) {
+    return !!value && typeof(value) === 'object' && !Array.isArray(value);
+}
+
+module.exports.isArray = isArray;
+function isArray(value) {
+   return Array.isArray(value);
+}
+
 // </TerminalPatterns>
 // <CombinatorPatterns>
 
@@ -69,13 +79,6 @@ function hasProperty(name, pattern) {
     }
 }
 
-module.exports.isObject = isObject;
-function isObject(...patterns) {
-    return function isObject$(value) {
-        return !!value && typeof(value) === 'object' && !Array.isArray(value) && and(...patterns)(value)
-    };
-}
-
 module.exports.repeated = repeated;
 function repeated(pattern, min) {
     return function repeated$(values) {
@@ -84,23 +87,6 @@ function repeated(pattern, min) {
         }
 
         for (const value of values) {
-            if (!pattern(value)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-}
-
-module.exports.isArray = isArray;
-function isArray(...patterns) {
-    return function isArray$(value) {
-        if (!Array.isArray(value)) {
-            return false;
-        }
-
-        for (const pattern of patterns) {
             if (!pattern(value)) {
                 return false;
             }

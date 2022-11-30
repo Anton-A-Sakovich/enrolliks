@@ -1,4 +1,4 @@
-const { isObject, hasProperty, isString } = require('../patterns');
+const { isObject, hasProperty, isString, and } = require('../predicates');
 
 exports.validateName = name => {
     if (!name || name.length < 3)
@@ -10,4 +10,5 @@ exports.validateName = name => {
     return '';
 };
 
-exports.isPerson = isObject(hasProperty('name', isString));
+exports.isPerson = and(isObject,
+    hasProperty('name', isString));
