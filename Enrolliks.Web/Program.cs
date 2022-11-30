@@ -93,7 +93,7 @@ namespace Enrolliks.Web
             app.UseEndpoints(builder =>
             {
                 builder.MapControllers();
-                builder.Map("/api/{**rest}", (string? rest) => Results.NotFound($"/{rest}"));
+                builder.Map("/api/{**rest}", (string? rest) => Results.NotFound());
             });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
 

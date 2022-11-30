@@ -46,7 +46,7 @@ namespace Enrolliks.Web.Controllers.People
 
         [HttpDelete("api/[controller]/{name}")]
         [ProducesResponseType(Status204NoContent)]
-        [ProducesResponseType(Status404NotFound)]
+        [ProducesResponseType(typeof(object), Status404NotFound, Json)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> Delete([FromRoute] string name)
         {
@@ -54,7 +54,7 @@ namespace Enrolliks.Web.Controllers.People
             return deleteResult switch
             {
                 IDeletePersonResult.Success => NoContent(),
-                IDeletePersonResult.NotFound => NotFound(null),
+                IDeletePersonResult.NotFound => NotFound(new object()),
                 IDeletePersonResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException()
             };

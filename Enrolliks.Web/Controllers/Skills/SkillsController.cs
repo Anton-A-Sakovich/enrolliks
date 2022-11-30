@@ -50,7 +50,7 @@ namespace Enrolliks.Web.Controllers.Skills
 
         [HttpDelete("api/[controller]/{id}")]
         [ProducesResponseType(Status204NoContent)]
-        [ProducesResponseType(Status404NotFound)]
+        [ProducesResponseType(typeof(object), Status404NotFound, Json)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> Delete(string id)
         {
@@ -58,7 +58,7 @@ namespace Enrolliks.Web.Controllers.Skills
             return deleteResult switch
             {
                 IDeleteSkillResult.Deleted => NoContent(),
-                IDeleteSkillResult.NotFound => NotFound(null),
+                IDeleteSkillResult.NotFound => NotFound(new object()),
                 IDeleteSkillResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException(),
             };
@@ -80,7 +80,7 @@ namespace Enrolliks.Web.Controllers.Skills
 
         [HttpGet("api/[controller]/{id}")]
         [ProducesResponseType(typeof(Skill), Status200OK, Json)]
-        [ProducesResponseType(Status404NotFound)]
+        [ProducesResponseType(typeof(object), Status404NotFound, Json)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> GetOne(string id)
         {
@@ -88,7 +88,7 @@ namespace Enrolliks.Web.Controllers.Skills
             return getOneResult switch
             {
                 IGetOneSkillResult.Success(Skill skill) => Ok(skill),
-                IGetOneSkillResult.NotFound => NotFound(null),
+                IGetOneSkillResult.NotFound => NotFound(new object()),
                 IGetOneSkillResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException(),
             };
@@ -97,7 +97,7 @@ namespace Enrolliks.Web.Controllers.Skills
         [HttpPut("api/[controller]/{id}")]
         [ProducesResponseType(typeof(Skill), Status200OK, Json)]
         [ProducesResponseType(typeof(SkillValidationErrorsModel), Status400BadRequest, Json)]
-        [ProducesResponseType(Status404NotFound)]
+        [ProducesResponseType(typeof(object), Status404NotFound, Json)]
         [ProducesResponseType(Status409Conflict)]
         [ProducesResponseType(Status500InternalServerError)]
         public async Task<IActionResult> Update(string id, UpdateSkillModel updateSkillModel)
@@ -112,7 +112,7 @@ namespace Enrolliks.Web.Controllers.Skills
                 IUpdateSkillResult.ValidationFailure(SkillValidationErrors errors) => BadRequest(
                     _mapper.Map<SkillValidationErrors, SkillValidationErrorsModel>(errors)),
 
-                IUpdateSkillResult.NotFound => NotFound(null),
+                IUpdateSkillResult.NotFound => NotFound(new object()),
                 IUpdateSkillResult.Conflict => Conflict((object?)null),
                 IUpdateSkillResult.RepositoryFailure => StatusCode(Status500InternalServerError),
                 _ => throw new SwitchFailureException(),
