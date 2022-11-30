@@ -43,6 +43,7 @@ const del = (url) => axios({
     validateStatus: null,
 }).then(response => ({
     status: response.status,
+    data: (response.data === undefined || response.data === null) ? null : response.data,
 }));
 
 const endpoint = personName => deletePersonEndpoint(del, personName);
