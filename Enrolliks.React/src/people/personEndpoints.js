@@ -1,121 +1,101 @@
+const { isArray, isObject, repeated } = require('../patterns');
+const { isPerson } = require('./personUtils');
+
+function convertRemainingStatuses(status, resultTypes) {
+    if ((status + "").startsWith("4")) {
+        return {
+            tag: resultTypes.badRequest,
+        };
+    }
+
+    if ((status + "").startsWith("5")) {
+        return {
+            tag: resultTypes.serverError,
+        };
+    }
+
+    return {
+        tag: resultTypes.unknownError,
+    };
+}
+
 const getPeopleResultType = exports.getPeopleResultType = {
-    success: 0,
-    badRequest: 1,
-    serverError: 2,
-    unknownError: 3,
+    success: 'getPeopleResultType.success',
+    badRequest: 'getPeopleResultType.badRequest',
+    serverError: 'getPeopleResultType.serverError',
+    unknownError: 'getPeopleResultType.unknownError',
 };
 
 exports.getPeople = async (get) => {
     const response = await get('/api/people');
 
-    if (response.status === 200) {
+    if (response.status === 200 && isArray(repeated(isPerson, 0))(response.data)) {
         return {
             tag: getPeopleResultType.success,
             people: response.data,
         };
     }
 
-    if ((response.status + "").startsWith("4")) {
-        return {
-            tag: getPeopleResultType.badRequest,
-        };
-    }
-
-    if ((response.status + "").startsWith("5")) {
-        return {
-            tag: getPeopleResultType.serverError,
-        };
-    }
-
-    return {
-        tag: getPeopleResultType.unknownError,
-    };
+    return convertRemainingStatuses(response.status, getPeopleResultType);
 };
 
 const createPersonResultType = exports.createPersonResultType = {
-    success: 0,
-    conflict: 1,
-    validationFailure: 2,
-    badRequest: 3,
-    serverError: 4,
-    unknownError: 5,
+    success: 'createPersonResultType.success',
+    conflict: 'createPersonResultType.conflict',
+    validationFailure: 'createPersonResultType.validationFailure',
+    badRequest: 'createPersonResultType.badRequest',
+    serverError: 'createPersonResultType.serverError',
+    unknownError: 'createPersonResultType.unknownError',
 };
 
 exports.createPerson = async (post, personToCreate) => {
     const response = await post('/api/people/create', personToCreate);
 
-    if (response.status === 201) {
+    if (response.status === 201 && isPerson(response.data)) {
         return {
             tag: createPersonResultType.success,
             createdPerson: response.data,
         };
     }
 
-    if (response.status === 400) {
+    if (response.status === 400 && isObject()(response.data)) {
         return {
             tag: createPersonResultType.validationFailure,
             validationErrors: response.data,
         };
     }
 
-    if (response.status === 404 && typeof (response.data) === 'string') {
-        return {
-            tag: createPersonResultType.badRequest,
-        };
-    }
-
-    if (response.status == 409) {
+    if (response.status === 409) {
         return {
             tag: createPersonResultType.conflict,
         };
     }
 
-    if (response.status == 500) {
-        return {
-            tag: createPersonResultType.serverError,
-        };
-    }
-
-    return {
-        tag: createPersonResultType.unknownError,
-    };
+    return convertRemainingStatuses(response.status, createPersonResultType);
 }
 
 const deletePersonResultType = exports.deletePersonResultType = {
-    success: 0,
-    notFound: 1,
-    badRequest: 2,
-    serverError: 3,
-    unknownError: 4,
+    success: 'deletePersonResultType.success',
+    notFound: 'deletePersonResultType.notFound',
+    badRequest: 'deletePersonResultType.badRequest',
+    serverError: 'deletePersonResultType.serverError',
+    unknownError: 'deletePersonResultType.unknownError',
 };
 
 exports.deletePerson = async (del, name) => {
     const response = await del(`/api/people/${encodeURIComponent(name)}`);
 
-    switch (response.status) {
-        case 204:
-            return {
-                tag: deletePersonResultType.success,
-            };
-        
-        case 404:
-            return {
-                tag: deletePersonResultType.notFound,
-            };
-
-        case 400:
-            return {
-                tag: deletePersonResultType.badRequest,
-            };
-
-        case 500:
-            return {
-                tag: deletePersonResultType.serverError,
-            };
-
-        default:
-            return {
-                tag: deletePersonResultType.unknownError,
-            };
+    if (response.status === 204) {
+        return {
+            tag: deletePersonResultType.success,
+        };
     }
+
+    if (response.status === 404 && response.data === null) {
+        return {
+            tag: deletePersonResultType.notFound,
+        };
+    }
+
+    return convertRemainingStatuses(response.status, deletePersonResultType);
 };
