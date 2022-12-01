@@ -82,17 +82,17 @@ function hasProperty(name, pattern) {
 module.exports.repeated = repeated;
 function repeated(pattern, min) {
     return function repeated$(values) {
-        if (values.length < min) {
-            return false;
-        }
+        let valuesCount = 0;
 
         for (const value of values) {
             if (!pattern(value)) {
                 return false;
             }
+
+            valuesCount++;
         }
 
-        return true;
+        return valuesCount >= min;
     }
 }
 
