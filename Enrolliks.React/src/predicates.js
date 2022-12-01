@@ -8,7 +8,7 @@ function isAny() {
 module.exports.isConstant = isConstant;
 function isConstant(constant) {
     return function isConstant$(value) {
-        return value === constant;
+        return Object.is(constant, value);
     }
 }
 
