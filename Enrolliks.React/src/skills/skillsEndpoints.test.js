@@ -424,7 +424,7 @@ describe('Get skill', () => {
             }))
         ),
         ...(
-            generateStatuses(400).map(status => ({
+            generateStatuses(400, [404]).map(status => ({
                 title: '4XX (unexpected).',
                 getReturns: {
                     status: status,
