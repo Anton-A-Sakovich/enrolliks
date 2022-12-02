@@ -10,6 +10,9 @@ const {
 
     getSkill,
     getSkillResultType,
+
+    updateSkill,
+    updateSkillResultType,
 } = require('./skillsEndpoints');
 
 const generateStatuses = (zeroStatus, except) => Array.from(
@@ -434,5 +437,177 @@ describe('Get skill', () => {
         expect.assertions(2);
         await expect(getSkill(get, skillId)).rejects.toBe(error);
         expect(get.mock.calls).toEqual([[getSkillUrl(skillId)]]);
+    });
+});
+
+describe('Update skill', () => {
+    const updateSkillUrl = skillId => `/api/skills/${encodeURIComponent(skillId)}`;
+
+    const skillToUpdate = {
+        id: 'react',
+        name: 'ReactJS'
+    };
+
+    const updatedSkill = {
+        id: 'react',
+        name: 'React'
+    };
+
+    const validationErrorsObjects = [
+        {
+            name: {
+                tag: 'Too long',
+                value: {
+                    maxCharactersAllowed: 128,
+                },
+            },
+        },
+    ];
+
+    const conversionData = [
+        {
+            title: '200; expected body.',
+            putReturns: {
+                status: 200,
+                data: updatedSkill,
+            },
+            endpointReturns: {
+                tag: updateSkillResultType.success,
+                updatedSkill: updatedSkill,
+            },
+        },
+        ...(
+            [undefined, null, '', 'string', {}, [], [updatedSkill]].map(data => ({
+                title: '200; unexpected body.',
+                putReturns: {
+                    status: 200,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.unknownError,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(200, [200]).map(status => ({
+                title: '2XX (unexpected).',
+                putReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.unknownError,
+                },
+            }))
+        ),
+        ...(
+            validationErrorsObjects.map(validationErrors => ({
+                title: '400; expected body.',
+                putReturns: {
+                    status: 400,
+                    data: validationErrors,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.validationFailure,
+                    validationErrors: validationErrors,
+                },
+            }))
+        ),
+        ...(
+            [undefined, null, '', 'string', {}, [], validationErrorsObjects].map(data => ({
+                title: '400; unexpected body.',
+                putReturns: {
+                    status: 400,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.badRequest,
+                },
+            }))
+        ),
+        {
+            title: '404; expected body.',
+            putReturns: {
+                status: 404,
+                data: {},
+            },
+            endpointReturns: {
+                tag: updateSkillResultType.notFound,
+            },
+        },
+        ...(
+            [undefined, null, '', 'string', []].map(data => ({
+                title: '404; unexpected body.',
+                putReturns: {
+                    status: 404,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.badRequest,
+                },
+            }))
+        ),
+        {
+            title: '409; expected body.',
+            putReturns: {
+                status: 409,
+                data: null,
+            },
+            endpointReturns: {
+                tag: updateSkillResultType.conflict,
+            },
+        },
+        ...(
+            [undefined, '', 'string', {}, []].map(data => ({
+                title: '409; unexpected body.',
+                putReturns: {
+                    status: 409,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.badRequest,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(400, [400, 404, 409]).map(status => ({
+                title: '4XX (unexpected)',
+                putReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.badRequest,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(500).map(status => ({
+                title: '5XX (unexpected).',
+                putReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: updateSkillResultType.serverError,
+                },
+            }))
+        ),
+    ];
+
+    it.each(conversionData)('Converts HTTP status code $title', async ({putReturns, endpointReturns}) => {
+        const put = jest.fn();
+        put.mockResolvedValue(putReturns);
+
+        expect.assertions(2);
+        await expect(updateSkill(put, skillToUpdate)).resolves.toEqual(endpointReturns);
+        expect(put.mock.calls).toEqual([[updateSkillUrl(skillToUpdate.id), skillToUpdate]]);
+    });
+
+    it('Passes through errors', async () => {
+        const put = jest.fn();
+        const error = new Error();
+        put.mockRejectedValue(error);
+
+        expect.assertions(2);
+        await expect(updateSkill(put, skillToUpdate)).rejects.toBe(error);
+        expect(put.mock.calls).toEqual([[updateSkillUrl(skillToUpdate.id), skillToUpdate]]);
     });
 });

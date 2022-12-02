@@ -1,4 +1,4 @@
-const { isArray, and, repeated, isObject } = require('../predicates');
+const { isArray, and, repeated, isObject, isConstant } = require('../predicates');
 const { isSkill, isSkillValidationErrors } = require('./skillsUtils');
 
 function defaultConvert(status, resultType) {
@@ -125,4 +125,46 @@ module.exports.getSkill = async function getSkill(get, skillId) {
     }
 
     return defaultConvert(response.status, getSkillResultType);
-}
+};
+
+const updateSkillResultType = module.exports.updateSkillResultType = {
+    success: 'updateSkillResultType.success',
+    validationFailure: 'updateSkillResultType.validationFailure',
+    conflict: 'updateSkillResultType.conflict',
+    notFound: 'updateSkillResultType.notFound',
+    badRequest: 'updateSkillResultType.badRequest',
+    serverError: 'updateSkillResultType.serverError',
+    unknownError: 'updateSkillResultType.unknownError',
+};
+
+module.exports.updateSkill = async function updateSkill(put, skillToUpdate) {
+    const response = await put(`/api/skills/${encodeURIComponent(skillToUpdate.id)}`, skillToUpdate);
+
+    if (response.status === 200 && isSkill(response.data)) {
+        return {
+            tag: updateSkillResultType.success,
+            updatedSkill: response.data,
+        };
+    }
+
+    if (response.status === 400 && isSkillValidationErrors(response.data)) {
+        return {
+            tag: updateSkillResultType.validationFailure,
+            validationErrors: response.data,
+        };
+    }
+
+    if (response.status === 404 && isObject(response.data)) {
+        return {
+            tag: updateSkillResultType.notFound,
+        };
+    }
+
+    if (response.status === 409 && isConstant(null)(response.data)) {
+        return {
+            tag: updateSkillResultType.conflict,
+        };
+    }
+
+    return defaultConvert(response.status, updateSkillResultType);
+};
