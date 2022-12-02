@@ -1,6 +1,9 @@
 const {
     createSkill,
-    createSkillResultType
+    createSkillResultType,
+
+    deleteSkill,
+    deleteSkillResultType,
 } = require('./skillsEndpoints');
 
 const generateStatuses = (zeroStatus, except) => Array.from(
@@ -136,5 +139,78 @@ describe('Create skill', () => {
         expect.assertions(2);
         await expect(createSkill(post, skillToCreate)).rejects.toBe(error);
         expect(post.mock.calls).toEqual([[createSkillUrl, skillToCreate]]);
+    });
+});
+
+describe('Delete skill', () => {
+    const deleteSkillUrl = id => `/api/skills/${encodeURIComponent(id)}`;
+    const skillId = 'dot-net';
+
+    const conversionData = [
+        {
+            delReturns: {
+                status: 204,
+            },
+            endpointReturns: {
+                tag: deleteSkillResultType.success,
+            },
+        },
+        ...(
+            generateStatuses(200, [204]).map(status => ({
+                delReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: deleteSkillResultType.unknownError,
+                },
+            }))
+        ),
+        {
+            delReturns: {
+                status: 404,
+            },
+            endpointReturns: {
+                tag: deleteSkillResultType.notFound,
+            },
+        },
+        ...(
+            generateStatuses(400, [404]).map(status => ({
+                delReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: deleteSkillResultType.badRequest,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(500).map(status => ({
+                delReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: deleteSkillResultType.serverError,
+                },
+            }))
+        ),
+    ];
+
+    it.each(conversionData)('Converts HTTP $delReturns.status response', async ({delReturns, endpointReturns}) => {
+        const del = jest.fn();
+        del.mockResolvedValue(delReturns);
+
+        expect.assertions(2);
+        await expect(deleteSkill(del, skillId)).resolves.toEqual(endpointReturns);
+        expect(del.mock.calls).toEqual([[deleteSkillUrl(skillId)]]);
+    });
+
+    it('Passes through errors', async () => {
+        const del = jest.fn();
+        const error = new Error();
+        del.mockRejectedValue(error);
+
+        expect.assertions(2);
+        await expect(deleteSkill(del, skillId)).rejects.toBe(error);
+        expect(del.mock.calls).toEqual([[deleteSkillUrl(skillId)]]);
     });
 });

@@ -52,3 +52,29 @@ module.exports.createSkill = async function createSkill(post, skillToCreate) {
 
     return defaultConvert(response.status, createSkillResultType);
 }
+
+const deleteSkillResultType = module.exports.deleteSkillResultType = {
+    success: 'deleteSkillResultType.success',
+    notFound: 'deleteSkillResultType.notFound',
+    badRequest: 'deleteSkillResultType.badRequest',
+    serverError: 'deleteSkillResultType.serverError',
+    unknownError: 'deleteSkillResultType.unknownError',
+};
+
+module.exports.deleteSkill = async function deleteSkill(del, skillId) {
+    const response = await del(`/api/skills/${encodeURIComponent(skillId)}`);
+
+    if (response.status === 204) {
+        return {
+            tag: deleteSkillResultType.success,
+        };
+    }
+
+    if (response.status === 404) {
+        return {
+            tag: deleteSkillResultType.notFound,
+        };
+    }
+
+    return defaultConvert(response.status, deleteSkillResultType);
+};
