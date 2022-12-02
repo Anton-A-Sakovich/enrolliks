@@ -3,6 +3,16 @@ const {
     createSkillResultType
 } = require('./skillsEndpoints');
 
+const generateStatuses = (zeroStatus, except) => Array.from(
+    function* () {
+        for (let status = zeroStatus; status < zeroStatus + 11; status++) {
+            if (!except || except.length === 0 || except.indexOf(status) === -1) {
+                yield status;
+            }
+        }
+    }()
+);
+
 describe('Create skill', () => {
     const createSkillUrl = '/api/skills/create';
 
@@ -47,7 +57,7 @@ describe('Create skill', () => {
             }))
         ),
         ...(
-            [200, 202, 203, 204, 205].map(status => ({
+            generateStatuses(200, [201]).map(status => ({
                 postReturns: {
                     status: status,
                 },
@@ -88,7 +98,7 @@ describe('Create skill', () => {
             },
         },
         ...(
-            [401, 402, 403, 404, 405].map(status => ({
+            generateStatuses(400, [400, 409]).map(status => ({
                 postReturns: {
                     status: status,
                 },
@@ -98,7 +108,7 @@ describe('Create skill', () => {
             }))
         ),
         ...(
-            [501, 502, 503, 504, 505].map(status => ({
+            generateStatuses(500).map(status => ({
                 postReturns: {
                     status: status,
                 },
@@ -109,7 +119,7 @@ describe('Create skill', () => {
         ),
     ];
 
-    it.each(conversionData)('converts HTTP $postReturns.status response', async ({postReturns, endpointReturns}) => {
+    it.each(conversionData)('Converts HTTP $postReturns.status response', async ({postReturns, endpointReturns}) => {
         const post = jest.fn();
         post.mockResolvedValue(postReturns);
 
