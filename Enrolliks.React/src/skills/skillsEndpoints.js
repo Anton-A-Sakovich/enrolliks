@@ -19,12 +19,12 @@ function defaultConvert(status, resultType) {
 }
 
 const createSkillResultType = module.exports.createSkillResultType = {
-    success: 'createSkillResult.success',
-    validationFailure: 'createSkillResult.validationFailure',
-    conflict: 'createSkillResult.conflict',
-    badRequest: 'createSkillResult.badRequest',
-    serverError: 'createSkillResult.serverError',
-    unknownError: 'createSkillResult.unknownError',
+    success: 'createSkillResultType.success',
+    validationFailure: 'createSkillResultType.validationFailure',
+    conflict: 'createSkillResultType.conflict',
+    badRequest: 'createSkillResultType.badRequest',
+    serverError: 'createSkillResultType.serverError',
+    unknownError: 'createSkillResultType.unknownError',
 };
 
 module.exports.createSkill = async function createSkill(post, skillToCreate) {
