@@ -51,7 +51,7 @@ module.exports.createSkill = async function createSkill(post, skillToCreate) {
     }
 
     return defaultConvert(response.status, createSkillResultType);
-}
+};
 
 const deleteSkillResultType = module.exports.deleteSkillResultType = {
     success: 'deleteSkillResultType.success',
