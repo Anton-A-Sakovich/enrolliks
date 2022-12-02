@@ -99,3 +99,30 @@ module.exports.getSkills = async function getSkills(get) {
 
     return defaultConvert(response.status, getSkillsResultType);
 };
+
+const getSkillResultType = module.exports.getSkillResultType = {
+    success: 'getSkillResultType.success',
+    notFound: 'getSkillResultType.notFound',
+    badRequest: 'getSkillResultType.badRequest',
+    serverError: 'getSkillResultType.serverError',
+    unknownError: 'getSkillResultType.unknownError',
+};
+
+module.exports.getSkill = async function getSkill(get, skillId) {
+    const response = await get(`/api/skills/${encodeURIComponent(skillId)}`);
+
+    if (response.status === 200 && isSkill(response.data)) {
+        return {
+            tag: getSkillResultType.success,
+            skill: response.data,
+        };
+    }
+
+    if (response.status === 404 && isObject(response.data)) {
+        return {
+            tag: getSkillResultType.notFound,
+        };
+    }
+
+    return defaultConvert(response.status, getSkillResultType);
+}
