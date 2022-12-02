@@ -173,11 +173,12 @@ describe('Create skill', () => {
 });
 
 describe('Delete skill', () => {
-    const deleteSkillUrl = id => `/api/skills/${encodeURIComponent(id)}`;
+    const deleteSkillUrl = skillId => `/api/skills/${encodeURIComponent(skillId)}`;
     const skillId = 'dot-net';
 
     const conversionData = [
         {
+            title: '204; expected body.',
             delReturns: {
                 status: 204,
             },
@@ -187,6 +188,7 @@ describe('Delete skill', () => {
         },
         ...(
             generateStatuses(200, [204]).map(status => ({
+                title: '204; unexpected body.',
                 delReturns: {
                     status: status,
                 },
@@ -196,6 +198,7 @@ describe('Delete skill', () => {
             }))
         ),
         {
+            title: '404; expected body.',
             delReturns: {
                 status: 404,
                 data: {},
@@ -206,6 +209,7 @@ describe('Delete skill', () => {
         },
         ...(
             [null, undefined, '', 'string', []].map(data => ({
+                title: '404; unexpected body.',
                 delReturns: {
                     status: 404,
                     data: data,
@@ -217,6 +221,7 @@ describe('Delete skill', () => {
         ),
         ...(
             generateStatuses(400, [404]).map(status => ({
+                title: '4XX (unexpected).',
                 delReturns: {
                     status: status,
                 },
@@ -227,6 +232,7 @@ describe('Delete skill', () => {
         ),
         ...(
             generateStatuses(500).map(status => ({
+                title: '5XX (unexpected).',
                 delReturns: {
                     status: status,
                 },
@@ -237,7 +243,7 @@ describe('Delete skill', () => {
         ),
     ];
 
-    it.each(conversionData)('Converts HTTP $delReturns.status response', async ({delReturns, endpointReturns}) => {
+    it.each(conversionData)('Converts HTTP status code $title', async ({delReturns, endpointReturns}) => {
         const del = jest.fn();
         del.mockResolvedValue(delReturns);
 
