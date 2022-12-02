@@ -341,7 +341,7 @@ describe('Get skills', () => {
         get.mockResolvedValue(getReturns);
 
         expect.assertions(2);
-        await expect(getSkills(get, getSkillsUrl)).resolves.toEqual(endpointReturns);
+        await expect(getSkills(get)).resolves.toEqual(endpointReturns);
         expect(get.mock.calls).toEqual([[getSkillsUrl]]);
     });
 
@@ -351,7 +351,7 @@ describe('Get skills', () => {
         get.mockRejectedValue(error);
 
         expect.assertions(2);
-        await expect(getSkills(get, getSkillsUrl)).rejects.toBe(error);
+        await expect(getSkills(get)).rejects.toBe(error);
         expect(get.mock.calls).toEqual([[getSkillsUrl]]);
     });
 });
