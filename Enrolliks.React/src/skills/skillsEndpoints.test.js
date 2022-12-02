@@ -4,6 +4,9 @@ const {
 
     deleteSkill,
     deleteSkillResultType,
+
+    getSkills,
+    getSkillsResultType,
 } = require('./skillsEndpoints');
 
 const generateStatuses = (zeroStatus, except) => Array.from(
@@ -212,5 +215,98 @@ describe('Delete skill', () => {
         expect.assertions(2);
         await expect(deleteSkill(del, skillId)).rejects.toBe(error);
         expect(del.mock.calls).toEqual([[deleteSkillUrl(skillId)]]);
+    });
+});
+
+describe('Get skills', () => {
+    const getSkillsUrl = '/api/skills';
+
+    const skills = [
+        {
+            id: 'dot-net',
+            name: '.NET',
+        },
+        {
+            id: 'react',
+            name: 'React',
+        }
+    ];
+
+    const conversionData = [
+        {
+            title: '200; expected body.',
+            getReturns: {
+                status: 200,
+                data: skills,
+            },
+            endpointReturns: {
+                tag: getSkillsResultType.success,
+                skills: skills,
+            },
+        },
+        ...(
+            [undefined, null, '', 'string', {}].map(data => ({
+                title: '200; unexpected body.',
+                getReturns: {
+                    status: 200,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: getSkillsResultType.unknownError,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(200, [200]).map(status => ({
+                title: '2XX (unexpected).',
+                getReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: getSkillsResultType.unknownError,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(400).map(status => ({
+                title: '4XX (unexpected)',
+                getReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: getSkillsResultType.badRequest,
+                },
+            }))
+        ),
+        ...(
+            generateStatuses(500).map(status => ({
+                title: '5XX (unexpected).',
+                getReturns: {
+                    status: status,
+                },
+                endpointReturns: {
+                    tag: getSkillsResultType.serverError,
+                },
+            }))
+        ),
+    ];
+
+    it.each(conversionData)('Converts HTTP status code $title', async ({getReturns, endpointReturns}) => {
+        const get = jest.fn();
+        get.mockResolvedValue(getReturns);
+
+        expect.assertions(2);
+        await expect(getSkills(get, getSkillsUrl)).resolves.toEqual(endpointReturns);
+        expect(get.mock.calls).toEqual([[getSkillsUrl]]);
+    });
+
+    it('Passes through errors', async () => {
+        const get = jest.fn();
+        const error = new Error();
+        get.mockRejectedValue(error);
+
+        expect.assertions(2);
+        await expect(getSkills(get, getSkillsUrl)).rejects.toBe(error);
+        expect(get.mock.calls).toEqual([[getSkillsUrl]]);
     });
 });

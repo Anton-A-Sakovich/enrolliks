@@ -1,3 +1,4 @@
+const { isArray, and, repeated } = require('../predicates');
 const { isSkill, isSkillValidationErrors } = require('./skillsUtils');
 
 function defaultConvert(status, resultType) {
@@ -77,4 +78,24 @@ module.exports.deleteSkill = async function deleteSkill(del, skillId) {
     }
 
     return defaultConvert(response.status, deleteSkillResultType);
+};
+
+const getSkillsResultType = module.exports.getSkillsResultType = {
+    success: 'getSkillsResultType.success',
+    badRequest: 'getSkillsResultType.badRequest',
+    serverError: 'getSkillsResultType.serverError',
+    unknownError: 'getSkillsResultType.unknownError',
+};
+
+module.exports.getSkills = async function getSkills(get) {
+    const response = await get('/api/skills');
+
+    if (response.status === 200 && and(isArray, repeated(isSkill, 0))(response.data)) {
+        return {
+            tag: getSkillsResultType.success,
+            skills: response.data,
+        };
+    }
+
+    return defaultConvert(response.status, getSkillsResultType);
 };
