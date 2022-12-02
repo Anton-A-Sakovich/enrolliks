@@ -1,4 +1,4 @@
-const { isArray, and, repeated } = require('../predicates');
+const { isArray, and, repeated, isObject } = require('../predicates');
 const { isSkill, isSkillValidationErrors } = require('./skillsUtils');
 
 function defaultConvert(status, resultType) {
@@ -71,7 +71,7 @@ module.exports.deleteSkill = async function deleteSkill(del, skillId) {
         };
     }
 
-    if (response.status === 404) {
+    if (response.status === 404 && isObject(response.data)) {
         return {
             tag: deleteSkillResultType.notFound,
         };

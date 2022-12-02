@@ -171,11 +171,23 @@ describe('Delete skill', () => {
         {
             delReturns: {
                 status: 404,
+                data: {},
             },
             endpointReturns: {
                 tag: deleteSkillResultType.notFound,
             },
         },
+        ...(
+            [null, undefined, '', 'string', []].map(data => ({
+                delReturns: {
+                    status: 404,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: deleteSkillResultType.badRequest,
+                },
+            }))
+        ),
         ...(
             generateStatuses(400, [404]).map(status => ({
                 delReturns: {
