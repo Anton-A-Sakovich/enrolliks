@@ -314,7 +314,7 @@ describe('Get skills', () => {
         ),
         ...(
             generateStatuses(400).map(status => ({
-                title: '4XX (unexpected)',
+                title: '4XX (unexpected).',
                 getReturns: {
                     status: status,
                 },
@@ -380,7 +380,7 @@ describe('Get skill', () => {
         },
         ...(
             [undefined, null, '', 'string', {}, [], [skill]].map(data => ({
-                title: '200; unexpected body',
+                title: '200; unexpected body.',
                 getReturns: {
                     status: 200,
                     data: data,
@@ -425,7 +425,7 @@ describe('Get skill', () => {
         ),
         ...(
             generateStatuses(400).map(status => ({
-                title: '4XX (unexpected)',
+                title: '4XX (unexpected).',
                 getReturns: {
                     status: status,
                 },
