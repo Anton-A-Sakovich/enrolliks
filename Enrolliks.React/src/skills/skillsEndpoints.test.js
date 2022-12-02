@@ -48,6 +48,7 @@ describe('Create skill', () => {
 
     const conversionData = [
         {
+            title: '201; expected body.',
             postReturns: {
                 status: 201,
                 data: createdSkill,
@@ -59,6 +60,7 @@ describe('Create skill', () => {
         },
         ...(
             [undefined, null, '', 'string', {}, [], ['string'] [{}], [createdSkill]].map(data => ({
+                title: '201; unexpected body.',
                 postReturns: {
                     status: 201,
                     data: data,
@@ -70,6 +72,7 @@ describe('Create skill', () => {
         ),
         ...(
             generateStatuses(200, [201]).map(status => ({
+                title: '2XX (unexpected).',
                 postReturns: {
                     status: status,
                 },
@@ -80,6 +83,7 @@ describe('Create skill', () => {
         ),
         ...(
             validationErrorsObjects.map(validationErrors => ({
+                title: '400; expected body.',
                 postReturns: {
                     status: 400,
                     data: validationErrors,
@@ -91,7 +95,8 @@ describe('Create skill', () => {
             }))
         ),
         ...(
-            [undefined, null, '', 'string', {}, [], ['string']].map(data => ({
+            [undefined, null, '', 'string', {}, [], ['string'], validationErrorsObjects].map(data => ({
+                title: '400; unexpected body.',
                 postReturns: {
                     status: 400,
                     data: data,
@@ -102,15 +107,30 @@ describe('Create skill', () => {
             }))
         ),
         {
+            title: '409; expected body.',
             postReturns: {
                 status: 409,
+                data: null,
             },
             endpointReturns: {
                 tag: createSkillResultType.conflict,
             },
         },
         ...(
+            [undefined, '', 'string', {}, []].map(data => ({
+                title: '409; unexpected body.',
+                postReturns: {
+                    status: 409,
+                    data: data,
+                },
+                endpointReturns: {
+                    tag: createSkillResultType.badRequest,
+                },
+            }))
+        ),
+        ...(
             generateStatuses(400, [400, 409]).map(status => ({
+                title: '4XX (unexpected).',
                 postReturns: {
                     status: status,
                 },
@@ -121,6 +141,7 @@ describe('Create skill', () => {
         ),
         ...(
             generateStatuses(500).map(status => ({
+                title: '5XX (unexpected).',
                 postReturns: {
                     status: status,
                 },
@@ -131,7 +152,7 @@ describe('Create skill', () => {
         ),
     ];
 
-    it.each(conversionData)('Converts HTTP $postReturns.status response', async ({postReturns, endpointReturns}) => {
+    it.each(conversionData)('Converts HTTP status code $title', async ({postReturns, endpointReturns}) => {
         const post = jest.fn();
         post.mockResolvedValue(postReturns);
 

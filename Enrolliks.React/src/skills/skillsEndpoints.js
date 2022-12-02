@@ -45,7 +45,7 @@ module.exports.createSkill = async function createSkill(post, skillToCreate) {
         };
     }
 
-    if (response.status === 409) {
+    if (response.status === 409 && isConstant(null)(response.data)) {
         return {
             tag: createSkillResultType.conflict,
         };
