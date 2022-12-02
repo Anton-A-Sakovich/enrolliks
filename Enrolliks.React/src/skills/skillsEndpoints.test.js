@@ -591,7 +591,7 @@ describe('Update skill', () => {
         ),
         ...(
             generateStatuses(400, [400, 404, 409]).map(status => ({
-                title: '4XX (unexpected)',
+                title: '4XX (unexpected).',
                 putReturns: {
                     status: status,
                 },
