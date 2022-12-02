@@ -127,4 +127,14 @@ describe('Create skill', () => {
         await expect(createSkill(post, skillToCreate)).resolves.toEqual(endpointReturns);
         expect(post.mock.calls).toEqual([[createSkillUrl, skillToCreate]]);
     });
+
+    it('Passes through errors', async () => {
+        const post = jest.fn();
+        const error = new Error();
+        post.mockRejectedValue(error);
+
+        expect.assertions(2);
+        await expect(createSkill(post, skillToCreate)).rejects.toBe(error);
+        expect(post.mock.calls).toEqual([[createSkillUrl, skillToCreate]]);
+    });
 });
